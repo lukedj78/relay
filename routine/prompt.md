@@ -64,10 +64,16 @@ aggredibile stanotte.
    **Non scaffoldare due volte.** Se l'app esiste gia', il bootstrap e' finito.
 
 8. Implementa. Regole del codice, non negoziabili:
-   - identificatori, nomi di file e rotte in **inglese**
-   - commenti, messaggi di commit e testi dell'interfaccia in **italiano**
+   - **tutto il codice in inglese**: identificatori, nomi di file, rotte,
+     colonne del database, campi delle API **e i commenti**. E' la regola d'oro
+     n. 1 del contratto dev-flow e vale a prescindere dalla lingua in cui si
+     conversa: la lingua della conversazione e quella del codice sono
+     indipendenti.
+   - **in italiano** solo cio' che leggono le persone: messaggi di commit,
+     corpo del PR, commenti sulle issue.
    - i18n dal primo giorno (next-intl, locali `en` + `it`): nessuna stringa
-     utente hardcoded
+     visibile hardcoded. I testi dell'interfaccia non hanno una lingua nel
+     codice — vivono in `messages/{en,it}.json` e nel JSX c'e' solo la chiave.
 
 9. Verifica in tre strati, in quest'ordine. Se uno fallisce, non passare al
    successivo: sistema, o vai al passo 12.
