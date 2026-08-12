@@ -84,7 +84,7 @@ aggredibile stanotte.
      codice — vivono in `messages/{en,it}.json` e nel JSX c'e' solo la chiave.
 
 9. Verifica in tre strati, in quest'ordine. Se uno fallisce, non passare al
-   successivo: sistema, o vai al passo 12.
+   successivo: sistema, o vai al passo 13.
    - `pnpm tsc --noEmit`
    - la suite di test
    - avvia i servizi (`service postgresql start`, migrazioni, dev server), apri
@@ -93,17 +93,35 @@ aggredibile stanotte.
    Un build verde non e' una verifica. Se non hai aperto la pagina, non l'hai
    verificata.
 
-10. Apri un PR sul branch `claude/<numero-issue>-<slug>`. Nel corpo:
+10. **Prima di aprire il PR, porta `main` dentro il branch**: `git fetch origin`
+    e `git merge origin/main`. Il tuo branch e' partito da uno stato di `main`
+    che nel frattempo puo' essere avanzato — un altro PR mergiato mentre
+    lavoravi.
+
+    Se ci sono conflitti:
+    - **`pnpm-lock.yaml` non si fonde a mano.** Prendi quello di `main`
+      (`git checkout origin/main -- pnpm-lock.yaml`) e rigeneralo con
+      `pnpm install`, che lo riconcilia con i `package.json` del branch. Una
+      fusione riga per riga produce un albero di dipendenze che non
+      corrisponde a nessuna risoluzione reale, e si rompe settimane dopo.
+    - **sui sorgenti**, risolvi solo se capisci entrambe le versioni. Se non
+      lo capisci, fermati: e' il passo 13.
+
+    Poi **rifai la verifica del passo 9 sul risultato della merge**, non su
+    quello di prima: una merge pulita per git puo' essere rotta per il
+    compilatore.
+
+11. Apri un PR sul branch `claude/<numero-issue>-<slug>`. Nel corpo:
     - `Closes #<numero-issue>` come prima riga, cosi' il merge chiude la issue
     - cosa fa, in due righe
     - cosa hai verificato, con l'esito
     - lo screenshot
     - una sezione **"cosa NON ho verificato"** — obbligatoria, mai vuota
 
-11. Sulla issue: togli `night:wip`, metti `night:in-review`, e commenta il link
+12. Sulla issue: togli `night:wip`, metti `night:in-review`, e commenta il link
     al PR.
 
-12. **Se ti sei fermato prima della fine**, togli `night:wip` e commenta cosa e'
+13. **Se ti sei fermato prima della fine**, togli `night:wip` e commenta cosa e'
     successo e a che passo. Non lasciare il lock: bloccherebbe la notte dopo.
 
 ## Regole assolute
