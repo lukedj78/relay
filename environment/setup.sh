@@ -38,12 +38,25 @@ else
       && nvm alias default "$NODE_WANTED" \
       && nvm use "$NODE_WANTED" \
       && corepack enable >/dev/null 2>&1
-    echo "node ora: $(node -v) (default: $(nvm alias default 2>/dev/null | head -1))"
+    echo "via nvm → $(node -v)"
   else
-    echo "nvm non trovato: node resta $(node -v 2>/dev/null || echo assente)"
-    echo "  i task sull'agente eve falliranno finche' la sandbox non e' su v${NODE_WANTED}"
+    # nvm assente. `n` e' piu' adatto a una sandbox: non e' una funzione di
+    # shell e non dipende da un profilo sorgente. Sostituisce il binario in
+    # /usr/local/bin, quindi sopravvive alla fine del setup semplicemente
+    # perche' e' un file — ed e' esattamente cio' che la cache conserva.
+    echo "nvm non trovato, provo con n"
+    npm install -g n >/dev/null 2>&1 \
+      && n "$NODE_WANTED" >/dev/null 2>&1 \
+      && hash -r \
+      && corepack enable >/dev/null 2>&1
+    echo "via n → $(node -v 2>/dev/null || echo 'fallito')"
   fi
   set -u
+
+  if [ "$(node -v 2>/dev/null | cut -c2- | cut -d. -f1)" != "$NODE_WANTED" ]; then
+    echo "  ATTENZIONE: node e' ancora $(node -v 2>/dev/null || echo assente)."
+    echo "  I task sull'agente eve falliranno: eve richiede >=${NODE_WANTED}."
+  fi
 fi
 
 echo "── capacita' dell'ambiente ─────────────────────────────"
