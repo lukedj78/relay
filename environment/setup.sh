@@ -9,6 +9,10 @@
 # Il risultato viene messo in cache tra le sessioni: la cache conserva i file,
 # non i processi. Le dipendenze restano installate, i servizi vanno riavviati
 # a ogni run — se ne occupa il prompt della routine.
+#
+# Le variabili d'ambiente NON vengono da qui: si settano nella scheda
+# dell'environment. Perche' DATABASE_URL e' uguale per tutti i progetti e
+# quando invece serve un environment dedicato, vedi docs/environments.md.
 
 set -uo pipefail
 

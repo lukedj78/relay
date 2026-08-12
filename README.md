@@ -99,4 +99,5 @@ investimento che si ripaga ogni notte.
 | [`routine/prompt.md`](routine/prompt.md) | il prompt della routine — il vero artefatto |
 | [`templates/claude-settings.json`](templates/claude-settings.json) | come la sandbox cloud carica le 43 skill dev-flow |
 | [`docs/day-0.md`](docs/day-0.md) | la checklist della sessione interattiva |
+| [`docs/environments.md`](docs/environments.md) | come si gestiscono `DATABASE_URL` e i segreti fra progetti diversi |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | cosa guardare quando un run non produce niente |
