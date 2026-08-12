@@ -16,6 +16,36 @@
 
 set -uo pipefail
 
+echo "── node ────────────────────────────────────────────────"
+# La sandbox parte con Node 22. eve richiede >=24, e i progetti dev-flow lo
+# dichiarano in engines: senza, la #5 e ogni task sull'agente falliscono.
+#
+# `nvm use` da solo NON basta: vive nella shell del setup, che muore qui. Il
+# run apre una shell nuova e tornerebbe a 22. Serve `nvm alias default`.
+NODE_WANTED=24
+if [ "$(node -v 2>/dev/null | cut -c2- | cut -d. -f1)" = "$NODE_WANTED" ]; then
+  echo "node gia' su v${NODE_WANTED}: $(node -v)"
+else
+  # nvm e' una funzione di shell, va sorgente. Il suo script tocca variabili
+  # non definite, quindi `set -u` va sospeso attorno.
+  set +u
+  # shellcheck disable=SC1090,SC1091
+  for f in "$HOME/.nvm/nvm.sh" "/usr/local/nvm/nvm.sh" "$NVM_DIR/nvm.sh"; do
+    [ -s "$f" ] && . "$f" && break
+  done
+  if command -v nvm >/dev/null 2>&1; then
+    nvm install "$NODE_WANTED" \
+      && nvm alias default "$NODE_WANTED" \
+      && nvm use "$NODE_WANTED" \
+      && corepack enable >/dev/null 2>&1
+    echo "node ora: $(node -v) (default: $(nvm alias default 2>/dev/null | head -1))"
+  else
+    echo "nvm non trovato: node resta $(node -v 2>/dev/null || echo assente)"
+    echo "  i task sull'agente eve falliranno finche' la sandbox non e' su v${NODE_WANTED}"
+  fi
+  set -u
+fi
+
 echo "── capacita' dell'ambiente ─────────────────────────────"
 # I blocchi che costano di piu' non sono i bug: sono le capacita' mancanti,
 # scoperte a meta' run. Qui l'ambiente dichiara cosa sa fare, in dieci secondi.
