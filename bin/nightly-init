@@ -44,8 +44,9 @@ case "$PHASE" in
      Serve almeno un PRD e dei task. Vedi docs/day-0.md" ;;
 esac
 
-if [ ! -f docs/DESIGN.md ]; then
-  warn "manca docs/DESIGN.md — la prima notte scaffoldera' senza direzione visiva.
+# Il contratto dev-flow colloca DESIGN.md dentro .workflow/, non in docs/.
+if [ ! -f .workflow/DESIGN.md ]; then
+  warn "manca .workflow/DESIGN.md — la prima notte scaffoldera' senza direzione visiva.
      Consigliato: /image-to-design-md o /figma-to-design-md prima di procedere."
 fi
 
