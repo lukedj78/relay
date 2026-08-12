@@ -16,6 +16,22 @@
 
 set -uo pipefail
 
+echo "── skill dev-flow ──────────────────────────────────────"
+# Il .claude/settings.json che relay-init scrive nel repo DICHIARA il
+# marketplace e il plugin, ma non li installa: in una sessione cloud
+# /root/.claude/plugins/installed_plugins.json resta {"plugins": {}} e il
+# passo 7 del prompt (invoca dev-flow) non ha niente da invocare.
+# Verificato il 2026-08-12 su predictionleagues: due run consecutivi si sono
+# fermati proprio qui, correttamente, invece di improvvisare.
+if claude plugin list 2>/dev/null | grep -q 'dev-flow'; then
+  echo "plugin dev-flow gia' installato"
+else
+  claude plugin marketplace add lukedj78/dev-flow \
+    && claude plugin install dev-flow@dev-flow \
+    && echo "plugin dev-flow installato" \
+    || echo "installazione del plugin fallita — i run si fermeranno al passo 7"
+fi
+
 echo "── dipendenze ──────────────────────────────────────────"
 if [ -f pnpm-lock.yaml ]; then
   pnpm install --frozen-lockfile
