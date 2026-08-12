@@ -93,6 +93,29 @@ Quando serve davvero, in pratica:
 Se non sei in uno di questi casi, **non stai in questo caso**. Metti un
 placeholder in `nightly` e vai avanti.
 
+## Verificare che l'environment funzioni
+
+Senza aspettare un progetto vero. Prima punta la CLI sull'environment con
+`/remote-env` dentro una sessione `claude`, poi:
+
+```bash
+cd ~/projects/night-flow && claude --cloud "Esegui il comando check-tools. Poi verifica che PostgreSQL sia avviato con: sudo -u postgres psql -c 'SELECT version();' e che il database app esista con: sudo -u postgres psql -lqt. Riporta l'output dei tre comandi e nient'altro. Non modificare nessun file."
+```
+
+Gira contro questo stesso repo, che non ha un `package.json`. Nel log del setup
+devi vedere le quattro intestazioni in ordine:
+
+```
+── dipendenze ──   nessun package.json: il progetto non e' ancora scaffoldato
+── database ──     database 'app' creato
+── migrazioni ──   nessuno schema Drizzle: niente da migrare
+── pronto ──
+```
+
+**Cosa questo non verifica:** il ramo `pnpm install`, che qui non viene mai
+preso. Quello si scopre col primo progetto vero — ed e' il motivo per cui il
+primo **Run now** della routine va guardato invece che schedulato.
+
 ## La rete, gia' che ci sei
 
 La allowlist `Trusted` di default copre npm, GitHub, Docker Hub e i registry
