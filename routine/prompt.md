@@ -21,9 +21,17 @@ aggredibile stanotte.
 2. **Scarta i bloccati.** Una issue non e' aggredibile se:
    - il suo corpo dice `Blocked by #N` e la issue `#N` e' ancora aperta
    - il suo titolo e' numerato (`T3 — ...`) ed esiste una issue aperta con
-     numero di task piu' basso
+     numero di task piu' basso **che non sia essa stessa esclusa al passo 1**
 
    I task numerati si eseguono **in ordine**. Non saltare avanti.
+
+   La precisazione conta: una issue `blocked` o `needs-spec` e' stata messa da
+   parte da una persona o da un run precedente, e **non deve congelare la
+   coda**. Se contasse nell'ordine, un solo task infrastrutturale con numero
+   basso — un fix di ambiente, un deploy che richiede credenziali umane —
+   fermerebbe tutto per sempre. Una in `night:wip` o `night:in-review` invece
+   **conta**: quel lavoro sta procedendo davvero, e saltarlo significherebbe
+   costruire sopra qualcosa che non e' ancora stato rivisto.
 
 3. **Ordina** quelle rimaste per label di priorita' (`priority:urgent` →
    `priority:high` → `priority:medium` → `priority:low` → nessuna), poi per
