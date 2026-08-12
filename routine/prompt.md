@@ -132,6 +132,8 @@ aggredibile stanotte.
 - Mai scegliere una libreria. Se serve, e' un `needs-spec` (passo 6).
 - Mai chiudere una issue a mano: la chiude il merge del PR, che lo decide una
   persona.
+- **Mai togliere la label `blocked` da una issue.** L'ha messa una persona per
+  toglierla dal gioco: se ti sembra sbagliata, commenta e lasciala dov'e'.
 - **Se sei bloccato, FERMATI e scrivilo sulla issue.** Un workaround e' il
   segnale di fermarsi, non di proseguire. Non c'e' nessuno sveglio a cui il
   workaround sembri sospetto.
