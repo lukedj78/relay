@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+#
+# nightly-init — prepara un progetto dev-flow al lavoro notturno.
+#
+# Da lanciare dentro la cartella del progetto, dopo il giorno 0 (vedi
+# docs/day-0.md). Crea il repo GitHub privato, committa la configurazione che
+# permette alla sandbox cloud di caricare le skill dev-flow, e stampa la
+# configurazione da incollare nella form della routine.
+#
+# Idempotente: rilanciarlo su un progetto gia' inizializzato non rompe nulla.
+#
+#   nightly-init           verifica, crea il repo, committa, pusha
+#   nightly-init --check   verifica soltanto, non tocca nulla
+
+set -euo pipefail
+
+CHECK_ONLY=false
+[ "${1:-}" = "--check" ] && CHECK_ONLY=true
+
+GH_OWNER="${NIGHTLY_GH_OWNER:-lukedj78}"
+MARKETPLACE_REPO="${NIGHTLY_MARKETPLACE_REPO:-lukedj78/dev-flow}"
+SLUG=$(basename "$PWD")
+
+die() { printf '\033[31m✗\033[0m %s\n' "$1" >&2; exit 1; }
+ok()  { printf '\033[32m✓\033[0m %s\n' "$1"; }
+warn(){ printf '\033[33m!\033[0m %s\n' "$1"; }
+
+# ─── Prerequisiti ────────────────────────────────────────────────────────────
+# Falliamo qui, forte e chiaro, invece di scoprire alle tre di notte che
+# mancava qualcosa.
+
+command -v gh >/dev/null || die "gh non installato — brew install gh"
+gh auth status >/dev/null 2>&1 || die "gh non autenticato — gh auth login"
+
+[ -d .git ] || die "non e' un repo git — lancia 'git init' prima"
+
+[ -f .workflow/meta.json ] \
+  || die "manca .workflow/meta.json — il giorno 0 non e' stato fatto (docs/day-0.md)"
+
+PHASE=$(python3 -c "import json;print(json.load(open('.workflow/meta.json'))['phase'])")
+case "$PHASE" in
+  empty|idea_captured)
+    die "phase='$PHASE': non c'e' abbastanza per lavorare di notte.
+     Serve almeno un PRD e una board Linear. Vedi docs/day-0.md" ;;
+esac
+
+if [ ! -f docs/DESIGN.md ]; then
+  warn "manca docs/DESIGN.md — la prima notte scaffoldera' senza direzione visiva.
+     Consigliato: /image-to-design-md o /figma-to-design-md prima di procedere."
+fi
+
+if ! python3 -c "import json,sys;sys.exit(0 if json.load(open('.workflow/meta.json')).get('linear') else 1)" 2>/dev/null; then
+  warn "meta.json non registra un progetto Linear — la coda notturna sara' vuota.
+     Lancia /linear-scrum Setup nel progetto prima di creare la routine."
+fi
+
+ok "prerequisiti verificati (phase='$PHASE')"
+
+if $CHECK_ONLY; then
+  echo "--check: nessuna modifica fatta."
+  exit 0
+fi
+
+# ─── La configurazione che serve alla sandbox ────────────────────────────────
+# Le skill dev-flow vivono in ~/.claude/skills/, che la sandbox cloud non vede:
+# clona solo il repo. La documentazione indica enabledPlugins in
+# .claude/settings.json come il modo di caricarle nelle sessioni cloud.
+
+mkdir -p .claude
+if [ -f .claude/settings.json ] && grep -q dev-flow .claude/settings.json; then
+  ok ".claude/settings.json gia' configurato"
+else
+  cat > .claude/settings.json <<JSON
+{
+  "extraKnownMarketplaces": {
+    "dev-flow": { "source": { "source": "github", "repo": "$MARKETPLACE_REPO" } }
+  },
+  "enabledPlugins": { "dev-flow@dev-flow": true }
+}
+JSON
+  ok ".claude/settings.json scritto"
+fi
+
+# ─── Il repo remoto ──────────────────────────────────────────────────────────
+
+if git remote get-url origin >/dev/null 2>&1; then
+  ok "remote origin gia' presente: $(git remote get-url origin)"
+else
+  gh repo create "$GH_OWNER/$SLUG" --private --source=. --remote=origin
+  ok "creato $GH_OWNER/$SLUG (privato)"
+fi
+
+BRANCH=$(git symbolic-ref --short HEAD)
+
+if [ -n "$(git status --porcelain)" ]; then
+  git add .claude/settings.json .workflow
+  git add -A
+  git commit -qm "chore: il progetto impara a lavorare di notte"
+  ok "commit creato"
+fi
+
+git push -qu origin "$BRANCH"
+ok "pushato su origin/$BRANCH"
+
+# ─── Cosa incollare nella form ───────────────────────────────────────────────
+
+ROUTINE_PROMPT="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")/routine/prompt.md"
+
+cat <<EOF
+
+────────────────────────────────────────────────────────────────
+  Il progetto e' pronto. Manca la routine.
+────────────────────────────────────────────────────────────────
+
+  Vai su https://claude.ai/code/routines → New routine
+
+    Nome         $SLUG — notte
+    Repository   $GH_OWNER/$SLUG
+    Environment  nightly
+    Connectors   SOLO Linear (togli tutti gli altri)
+    Modello      Sonnet
+    Trigger      Schedule → daily, 02:00
+
+    Prompt       incolla il contenuto di:
+                 $ROUTINE_PROMPT
+
+  Poi premi "Run now" e GUARDA il primo run. Il setup script sbaglia
+  sempre qualcosa la prima volta. Accendi il cron solo dopo che un run
+  e' arrivato fino al PR.
+
+EOF

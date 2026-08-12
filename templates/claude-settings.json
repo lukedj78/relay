@@ -1,0 +1,6 @@
+{
+  "extraKnownMarketplaces": {
+    "dev-flow": { "source": { "source": "github", "repo": "lukedj78/dev-flow" } }
+  },
+  "enabledPlugins": { "dev-flow@dev-flow": true }
+}
