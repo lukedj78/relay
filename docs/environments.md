@@ -125,3 +125,18 @@ richiesta fallisce con `403` e `x-deny-reason: host_not_allowed`.
 
 E' l'errore piu' facile da diagnosticare male, perche' dal fuori sembra un bug
 del codice.
+
+### I domini che servono a un progetto web dev-flow
+
+Scoperti sul campo il 2026-08-12 su predictionleagues, dove un run si e'
+fermato con `403` su `ui.shadcn.com`. Aggiungili all'environment **prima** del
+primo scaffold, non dopo:
+
+| Dominio | Serve a |
+|---|---|
+| `ui.shadcn.com` | registry e preset della CLI shadcn (`init`, `add`) |
+| `fonts.googleapis.com` | metadati dei font per `next/font/google` |
+| `fonts.gstatic.com` | i file `.woff2` scaricati in fase di build |
+
+I primi due falliscono a tempo di scaffold, il terzo a tempo di build: senza
+tutti e tre si perde un run per volta, sempre per la stessa causa.
