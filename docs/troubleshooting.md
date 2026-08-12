@@ -15,16 +15,34 @@ indistinguibili.
 
 ## I sintomi
 
-### Nessun PR, ma il run e' durato pochi secondi
+### "Niente di aggredibile stanotte"
 
-La coda era vuota. Nessun issue in `Ready`. Comportamento corretto: sposta
-qualcosa in `Ready` dalla UI Linear.
+Il run e' durato pochi secondi e non ha aperto nessun PR. La riga di spiegazione
+dice quale dei tre casi e':
 
-### L'issue e' tornato in `Ready` con label `needs-spec`
+- **coda vuota** — non ci sono issue aperti. Aggiungine.
+- **tutto bloccato** — ogni issue rimasto dipende da qualcosa di non completato.
+  Guarda le relazioni "blocked by" e la numerazione dei titoli: spesso e' un
+  issue che e' rimasto in `In Review` perche' non hai ancora mergiato il PR.
+- **tutto gia' in review** — hai PR in attesa. Mergiali o chiudili.
 
-Il gate ha funzionato. Il commento dell'issue dice cosa mancava. Di solito:
-criteri di accettazione assenti, oppure una decisione che spettava a te.
-Riscrivi l'issue e rimettilo in coda.
+### Tre issue marcati `needs-spec` e nessun PR
+
+Il gate ha funzionato tre volte di fila e il run si e' fermato, come previsto. I
+commenti sui tre issue dicono cosa mancava: di solito criteri di accettazione
+assenti, o una decisione che spettava a te.
+
+Non e' un guasto. E' la board che ti sta dicendo che non e' scritta abbastanza
+bene per lavorarci da sola.
+
+### Un issue e' rimasto bloccato in `In Progress`
+
+Il run e' morto dopo aver preso il lock e prima di rilasciarlo — di solito per
+un errore di infrastruttura, non per un errore suo. La notte dopo quell'issue
+verra' saltato, perche' "In Progress" e' fra gli stati esclusi.
+
+Rimettilo a mano nello stato di partenza. Se succede spesso, e' il segnale che i
+run muoiono presto: guarda il transcript.
 
 ### Il run non trova le skill dev-flow
 

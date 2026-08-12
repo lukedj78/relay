@@ -52,17 +52,42 @@ nightly-init
 
 e segui le istruzioni che stampa.
 
-## La colonna Ready
+## Come la notte sceglie da sola
 
-`linear-scrum` crea gli stati. Verifica che ci siano, e che significhino questo:
+**Non devi spostare niente ogni mattina.** La routine legge la board intera e
+decide da se': scarta quello che e' gia' preso, in review, bloccato o marcato
+`needs-spec`, e fra quello che resta prende il primo per priorita' e ordine.
 
 | Stato | Significato per la notte |
 |---|---|
-| `Backlog` | invisibile — la notte non lo tocca |
-| `Ready` | **la coda**: pronto, con criteri verificabili |
+| `Backlog` / `Todo` | **la coda**: tutto quello che non e' escluso |
 | `In Progress` | preso da un run (e' anche il lock) |
 | `In Review` | c'e' un PR che ti aspetta |
 | `Done` | mergiato da te |
 
-Il flusso di controllo tuo e' uno solo: **cosa sposti in `Ready`**. Lo fai di
-giorno, dalla UI di Linear, senza toccare ne' il prompt ne' il repo.
+Perche' funzioni, al passo 3 devi darle due cose — **una volta sola**, non ogni
+giorno:
+
+**La priorita'.** Imposta il campo priorita' di Linear su ogni issue. E' il
+primo criterio di ordinamento.
+
+**L'ordine di dipendenza.** Se il Task 3 non ha senso prima del Task 2, dillo in
+uno di questi modi, che la routine sa leggere:
+
+- una relazione Linear **"blocked by"** verso l'issue prerequisito
+- una **numerazione nel titolo** (`T1 — ...`, `T2 — ...`): i task numerati si
+  eseguono in ordine crescente e la notte non salta avanti
+- una riga nella descrizione che nomina il task prerequisito
+
+`prd-to-tasks` numera gia' i task nel titolo, quindi nella maggior parte dei
+casi non devi fare niente.
+
+## Le due label che ti restano
+
+| Label | Chi la mette | Effetto |
+|---|---|---|
+| `needs-spec` | la notte, quando un issue non ha criteri verificabili | escluso finche' non lo riscrivi |
+| `blocked` | tu, quando vuoi togliere qualcosa dalla coda | escluso |
+
+`blocked` e' il tuo freno a mano: se non vuoi che tocchi una certa area, la
+marchi e basta. Non e' un obbligo quotidiano — e' un'eccezione.

@@ -80,12 +80,27 @@ sembri sospetto, quindi il prompt della routine gli vieta di produrne: davanti a
 un ostacolo si ferma, commenta su Linear e chiude il run. **Un run che si ferma
 è un run riuscito.**
 
+## Cosa devi fare tu, ogni giorno
+
+Di norma: **niente.**
+
+La routine legge la board da sola — scarta quello che è già preso, in review,
+bloccato o marcato `needs-spec`, e fra il resto prende il primo per priorità e
+ordine di dipendenza. Non c'è nessuna colonna "pronto per te" da alimentare a
+mano: una lista da tenere aggiornata ogni mattina sarebbe solo una to-do list
+con passi in più.
+
+Ti restano due gesti, entrambi occasionali:
+
+- **mergiare o chiudere** il PR che trovi
+- **riscrivere** gli issue che la notte ha marcato `needs-spec`, quando ti va
+
 ## Dove si rompe
 
-La qualità dei PR notturni è esattamente la qualità della colonna `Ready` in
-Linear. Un issue vago non produce niente di buono: produce codice sbagliato, che
-è peggio di nessun codice. Il passo 5 del prompt (il gate `needs-spec`) esiste
-per intercettarlo, ma non fa miracoli.
+La qualità dei PR notturni è esattamente la qualità degli issue in Linear. Un
+issue vago non produce niente di buono: produce codice sbagliato, che è peggio
+di nessun codice. Il gate `needs-spec` lo intercetta e passa al successivo, ma
+non fa miracoli — se la board è tutta vaga, la notte non fa niente e te lo dice.
 
 Il tempo speso a scrivere criteri di accettazione veri nel giorno 0 è l'unico
 investimento che si ripaga ogni notte.
