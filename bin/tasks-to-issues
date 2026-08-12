@@ -1,0 +1,217 @@
+#!/usr/bin/env python3
+"""
+tasks-to-issues — trasforma .workflow/tasks.md in issue GitHub.
+
+Da lanciare nella cartella del progetto, dopo prd-to-tasks e dopo che il repo
+ha un remote (cioe' dopo nightly-init).
+
+    tasks-to-issues --dry-run    mostra cosa creerebbe, non tocca nulla
+    tasks-to-issues              crea le issue mancanti
+
+Idempotente: salta le issue il cui titolo esiste gia', quindi lo si puo'
+rilanciare dopo aver aggiunto task al file.
+
+Il formato atteso e' quello prodotto da prd-to-tasks:
+
+    ## Epic P0 — Titolo dell'epic
+    ### Sottosezione
+    - [ ] **Titolo del task** — descrizione
+      - Acceptance: ...
+      - File: ...
+      - Stimato: 4h
+
+I task gia' spuntati (`- [x]`) vengono ignorati.
+"""
+
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+TASKS = Path(".workflow/tasks.md")
+
+# La priorita' viene dedotta dal nome dell'epic: P0 e' quello che blocca tutto
+# il resto, P3 e' rifinitura.
+PRIORITY_BY_EPIC = {
+    "P0": "priority:urgent",
+    "P1": "priority:high",
+    "P2": "priority:medium",
+    "P3": "priority:low",
+}
+
+LABELS = {
+    "night:wip": ("fbca04", "Presa da un run notturno in corso"),
+    "night:in-review": ("0e8a16", "C'e' un PR che aspetta una review"),
+    "needs-spec": ("d93f0b", "Criteri di accettazione mancanti o ambigui"),
+    "blocked": ("b60205", "Messa da parte: la notte non la tocca"),
+    "priority:urgent": ("e11d21", None),
+    "priority:high": ("eb6420", None),
+    "priority:medium": ("fbca04", None),
+    "priority:low": ("c2e0c6", None),
+}
+
+
+def die(msg):
+    print(f"\033[31m✗\033[0m {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run(args, **kw):
+    return subprocess.run(args, capture_output=True, text=True, **kw)
+
+
+def parse(text):
+    """Estrae i task non spuntati, con epic, corpo e numero progressivo."""
+    tasks = []
+    epic = None
+    section = None
+    current = None
+
+    for line in text.splitlines():
+        if line.startswith("## "):
+            epic = line[3:].strip()
+            current = None
+            continue
+        if line.startswith("### "):
+            section = line[4:].strip()
+            current = None
+            continue
+
+        task = re.match(r"^- \[ \] \*\*(.+?)\*\*(.*)$", line)
+        if task:
+            current = {
+                "title": task.group(1).strip(),
+                "tail": task.group(2).strip(" —-"),
+                "epic": epic,
+                "section": section,
+                "detail": [],
+            }
+            tasks.append(current)
+            continue
+
+        # I task spuntati chiudono il blocco corrente senza aprirne uno nuovo.
+        if re.match(r"^- \[x\] ", line, re.IGNORECASE):
+            current = None
+            continue
+
+        # Righe di dettaglio: indentate sotto il task.
+        if current is not None and line.startswith(("  -", "    ")):
+            current["detail"].append(line.strip().lstrip("- "))
+            continue
+
+        if not line.strip():
+            continue
+        # Qualsiasi altra riga a inizio colonna chiude il blocco.
+        if not line.startswith(" "):
+            current = None
+
+    return tasks
+
+
+def priority_of(epic):
+    if not epic:
+        return None
+    for marker, label in PRIORITY_BY_EPIC.items():
+        if marker in epic:
+            return label
+    return None
+
+
+def body_of(task, number):
+    parts = []
+    if task["tail"]:
+        parts.append(task["tail"])
+    if task["detail"]:
+        parts.append("")
+        parts.extend(f"- {d}" for d in task["detail"])
+    parts += [
+        "",
+        "---",
+        f"Task {number}"
+        + (f" · {task['epic']}" if task["epic"] else "")
+        + (f" · {task['section']}" if task["section"] else ""),
+        "",
+        "Generata da `tasks-to-issues` da `.workflow/tasks.md`.",
+    ]
+    return "\n".join(parts)
+
+
+def main():
+    dry = "--dry-run" in sys.argv
+
+    if not TASKS.exists():
+        die(f"manca {TASKS} — lancia prima /prd-to-tasks")
+
+    if run(["gh", "auth", "status"]).returncode != 0:
+        die("gh non autenticato — gh auth login")
+
+    repo = run(["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"])
+    if repo.returncode != 0:
+        die("nessun repo GitHub per questa cartella — lancia prima nightly-init")
+    repo = repo.stdout.strip()
+
+    tasks = parse(TASKS.read_text(encoding="utf-8"))
+    if not tasks:
+        die(f"nessun task non spuntato in {TASKS}")
+
+    existing = run(
+        ["gh", "issue", "list", "--repo", repo, "--state", "all",
+         "--limit", "500", "--json", "title"]
+    )
+    titles = {i["title"] for i in json.loads(existing.stdout or "[]")}
+
+    print(f"repo: {repo}")
+    print(f"task trovati: {len(tasks)}")
+    print()
+
+    created = skipped = 0
+    for n, task in enumerate(tasks, start=1):
+        title = f"T{n} — {task['title']}"
+        if title in titles:
+            skipped += 1
+            continue
+
+        labels = [p] if (p := priority_of(task["epic"])) else []
+
+        if dry:
+            print(f"  [creerebbe] {title}" + (f"  ({labels[0]})" if labels else ""))
+            created += 1
+            continue
+
+        # Le label devono esistere prima di essere applicate.
+        for name in labels:
+            color, desc = LABELS.get(name, ("ededed", None))
+            args = ["gh", "label", "create", name, "--repo", repo, "--color", color]
+            if desc:
+                args += ["--description", desc]
+            run(args)  # fallisce se esiste gia': va bene
+
+        args = ["gh", "issue", "create", "--repo", repo,
+                "--title", title, "--body", body_of(task, n)]
+        for name in labels:
+            args += ["--label", name]
+
+        r = run(args)
+        if r.returncode != 0:
+            die(f"creazione fallita per «{title}»: {r.stderr.strip()}")
+        print(f"  \033[32m✓\033[0m {title}  →  {r.stdout.strip()}")
+        created += 1
+
+    if not dry:
+        # Le label di flusso servono alla routine anche prima del primo uso.
+        for name, (color, desc) in LABELS.items():
+            args = ["gh", "label", "create", name, "--repo", repo, "--color", color]
+            if desc:
+                args += ["--description", desc]
+            run(args)
+
+    print()
+    verb = "da creare" if dry else "create"
+    print(f"{created} {verb}, {skipped} gia' presenti")
+    if dry:
+        print("--dry-run: nessuna issue creata.")
+
+
+if __name__ == "__main__":
+    main()

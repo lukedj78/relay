@@ -10,7 +10,7 @@ una form da compilare.
 
 **Il giorno decidi, la notte esegue.** Le fasi di dev-flow che richiedono un
 giudizio — l'idea, il PRD, il DESIGN.md, la scelta della libreria UI — le fai tu
-in una sessione interattiva. Poi una routine cloud pesca dalla board Linear e
+in una sessione interattiva. Poi una routine cloud pesca dalle issue GitHub e
 apre un PR a notte.
 
 ## Perché una routine cloud e non un cron sul Mac
@@ -54,16 +54,31 @@ volta: lo stesso environment vale per tutti i progetti.
 ### Per ogni progetto nuovo
 
 1. **Il giorno 0**, interattivo — vedi [`docs/day-0.md`](docs/day-0.md).
-   Un'ora circa. Produce PRD, DESIGN.md e una board Linear piena.
+   Un'ora circa. Produce PRD, DESIGN.md e la lista dei task.
 2. **Il controllo a vuoto**: `cd ~/projects/<slug> && nightly-init --check`
    verifica i prerequisiti senza creare né committare niente.
-3. **Il bootstrap**: `nightly-init`
-4. **La routine**: crea una routine su
+3. **Il bootstrap**: `nightly-init` — crea il repo GitHub privato e la config
+4. **La coda**: `tasks-to-issues` — trasforma `tasks.md` in issue GitHub
+5. **La routine**: crea una routine su
    [claude.ai/code/routines](https://claude.ai/code/routines) incollando
    [`routine/prompt.md`](routine/prompt.md). `nightly-init` stampa la
    configurazione esatta da usare.
 
 Da lì in poi: ogni mattina trovi un PR da mergiare o da chiudere.
+
+## Perché la coda sta su GitHub e non su un tracker
+
+Perché le sessioni cloud hanno **strumenti GitHub integrati e già
+autenticati** — leggere issue, commentare, aprire PR — senza configurazione.
+
+Il che significa che la routine gira con **zero connectors**. Non è solo
+comodità: la documentazione avverte che un connector incluso in una routine può
+usare tutti i suoi strumenti, scritture comprese, senza chiedere. Zero
+connectors è zero superficie.
+
+In più issue, PR e codice stanno nello stesso posto: un PR che dice
+`Closes #12` chiude la issue quando lo mergi, e non c'è niente da tenere
+allineato a mano.
 
 ## Cosa fa e cosa non fa la notte
 
@@ -77,7 +92,7 @@ Da lì in poi: ogni mattina trovi un PR da mergiare o da chiudere.
 
 L'ultima riga è la più importante. Di notte non c'è nessuno a cui un workaround
 sembri sospetto, quindi il prompt della routine gli vieta di produrne: davanti a
-un ostacolo si ferma, commenta su Linear e chiude il run. **Un run che si ferma
+un ostacolo si ferma, commenta sulla issue e chiude il run. **Un run che si ferma
 è un run riuscito.**
 
 ## Cosa devi fare tu, ogni giorno
@@ -97,7 +112,7 @@ Ti restano due gesti, entrambi occasionali:
 
 ## Dove si rompe
 
-La qualità dei PR notturni è esattamente la qualità degli issue in Linear. Un
+La qualità dei PR notturni è esattamente la qualità delle issue GitHub. Una
 issue vago non produce niente di buono: produce codice sbagliato, che è peggio
 di nessun codice. Il gate `needs-spec` lo intercetta e passa al successivo, ma
 non fa miracoli — se la board è tutta vaga, la notte non fa niente e te lo dice.
@@ -110,6 +125,7 @@ investimento che si ripaga ogni notte.
 | File | Cosa contiene |
 |---|---|
 | [`bin/nightly-init`](bin/nightly-init) | crea il repo GitHub, committa la config, verifica i prerequisiti |
+| [`bin/tasks-to-issues`](bin/tasks-to-issues) | `tasks.md` → issue GitHub, con priorità e numerazione |
 | [`environment/setup.sh`](environment/setup.sh) | il setup script del cloud environment |
 | [`routine/prompt.md`](routine/prompt.md) | il prompt della routine — il vero artefatto |
 | [`templates/claude-settings.json`](templates/claude-settings.json) | come la sandbox cloud carica le 43 skill dev-flow |

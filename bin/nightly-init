@@ -41,7 +41,7 @@ PHASE=$(python3 -c "import json;print(json.load(open('.workflow/meta.json'))['ph
 case "$PHASE" in
   empty|idea_captured)
     die "phase='$PHASE': non c'e' abbastanza per lavorare di notte.
-     Serve almeno un PRD e una board Linear. Vedi docs/day-0.md" ;;
+     Serve almeno un PRD e dei task. Vedi docs/day-0.md" ;;
 esac
 
 if [ ! -f docs/DESIGN.md ]; then
@@ -49,9 +49,9 @@ if [ ! -f docs/DESIGN.md ]; then
      Consigliato: /image-to-design-md o /figma-to-design-md prima di procedere."
 fi
 
-if ! python3 -c "import json,sys;sys.exit(0 if json.load(open('.workflow/meta.json')).get('linear') else 1)" 2>/dev/null; then
-  warn "meta.json non registra un progetto Linear — la coda notturna sara' vuota.
-     Lancia /linear-scrum Setup nel progetto prima di creare la routine."
+if [ ! -f .workflow/tasks.md ]; then
+  warn "manca .workflow/tasks.md — senza quello non c'e' niente da mettere in coda.
+     Lancia /prd-to-tasks nel progetto prima di creare la routine."
 fi
 
 ok "prerequisiti verificati (phase='$PHASE')"
@@ -104,28 +104,34 @@ ok "pushato su origin/$BRANCH"
 
 # ─── Cosa incollare nella form ───────────────────────────────────────────────
 
-ROUTINE_PROMPT="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")/routine/prompt.md"
+NIGHT_FLOW="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")"
 
 cat <<EOF
 
 ────────────────────────────────────────────────────────────────
-  Il progetto e' pronto. Manca la routine.
+  Il repo e' pronto. Mancano la coda e la routine.
 ────────────────────────────────────────────────────────────────
 
-  Vai su https://claude.ai/code/routines → New routine
+  1. La coda — trasforma i task in issue GitHub:
 
-    Nome         $SLUG — notte
-    Repository   $GH_OWNER/$SLUG
-    Environment  nightly
-    Connectors   SOLO Linear (togli tutti gli altri)
-    Modello      Sonnet
-    Trigger      Schedule → daily, 02:00
+       $NIGHT_FLOW/bin/tasks-to-issues --dry-run
+       $NIGHT_FLOW/bin/tasks-to-issues
 
-    Prompt       incolla il contenuto di:
-                 $ROUTINE_PROMPT
+  2. La routine — https://claude.ai/code/routines → New routine
 
-  Poi premi "Run now" e GUARDA il primo run. Il setup script sbaglia
-  sempre qualcosa la prima volta. Accendi il cron solo dopo che un run
-  e' arrivato fino al PR.
+       Nome         $SLUG — notte
+       Repository   $GH_OWNER/$SLUG
+       Environment  nightly
+       Connectors   NESSUNO — togli tutto. Gli strumenti GitHub sono
+                    gia' dentro le sessioni cloud e non serve altro.
+       Modello      Sonnet
+       Trigger      Schedule → daily, 02:00
+
+       Prompt       incolla il contenuto di:
+                    $NIGHT_FLOW/routine/prompt.md
+
+  3. Premi "Run now" e GUARDA il primo run. Il setup script sbaglia
+     sempre qualcosa la prima volta. Accendi il cron solo dopo che un
+     run e' arrivato fino al PR.
 
 EOF

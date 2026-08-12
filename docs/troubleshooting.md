@@ -9,7 +9,7 @@ senza errori di infrastruttura. Non dice nulla sul compito.
 Richieste di rete bloccate, connector mancanti e fallimenti del task compaiono
 solo dentro il transcript. Aprilo.
 
-Per questo il prompt della routine obbliga a **commentare su Linear anche in
+Per questo il prompt della routine obbliga a **commentare sulla issue anche in
 caso di fallimento**: un run silenzioso e un run riuscito, da fuori, sono
 indistinguibili.
 
@@ -20,29 +20,34 @@ indistinguibili.
 Il run e' durato pochi secondi e non ha aperto nessun PR. La riga di spiegazione
 dice quale dei tre casi e':
 
-- **coda vuota** — non ci sono issue aperti. Aggiungine.
-- **tutto bloccato** — ogni issue rimasto dipende da qualcosa di non completato.
-  Guarda le relazioni "blocked by" e la numerazione dei titoli: spesso e' un
-  issue che e' rimasto in `In Review` perche' non hai ancora mergiato il PR.
+- **coda vuota** — non ci sono issue aperte. Lancia `tasks-to-issues`.
+- **tutto bloccato** — ogni issue rimasta dipende da qualcosa di aperto. Guarda
+  le righe `Blocked by #N` e la numerazione dei titoli: spesso il colpevole e'
+  una issue con `night:in-review` perche' non hai ancora mergiato il suo PR.
 - **tutto gia' in review** — hai PR in attesa. Mergiali o chiudili.
 
-### Tre issue marcati `needs-spec` e nessun PR
+### Tre issue marcate `needs-spec` e nessun PR
 
 Il gate ha funzionato tre volte di fila e il run si e' fermato, come previsto. I
-commenti sui tre issue dicono cosa mancava: di solito criteri di accettazione
+commenti sulle tre issue dicono cosa mancava: di solito criteri di accettazione
 assenti, o una decisione che spettava a te.
 
 Non e' un guasto. E' la board che ti sta dicendo che non e' scritta abbastanza
 bene per lavorarci da sola.
 
-### Un issue e' rimasto bloccato in `In Progress`
+### Una issue e' rimasta con la label `night:wip`
 
 Il run e' morto dopo aver preso il lock e prima di rilasciarlo — di solito per
-un errore di infrastruttura, non per un errore suo. La notte dopo quell'issue
-verra' saltato, perche' "In Progress" e' fra gli stati esclusi.
+un errore di infrastruttura, non per un errore suo. La notte dopo quella issue
+verra' saltata, perche' `night:wip` e' fra le label escluse.
 
-Rimettilo a mano nello stato di partenza. Se succede spesso, e' il segnale che i
-run muoiono presto: guarda il transcript.
+Togli la label a mano:
+
+```bash
+gh issue edit <numero> --remove-label night:wip
+```
+
+Se succede spesso, e' il segnale che i run muoiono presto: guarda il transcript.
 
 ### Il run non trova le skill dev-flow
 
@@ -92,14 +97,23 @@ sull'abbonamento, ma **scende a cinque minuti appena entri negli usage credits**
 Sforare rende il resto del run improvvisamente molto piu' caro in token, non
 solo in euro.
 
-### Due run hanno preso lo stesso issue
+### Due run hanno preso la stessa issue
 
-Non dovrebbe succedere: lo stato `In Progress` e' il lock. Se e' successo,
-guarda se il primo run e' morto prima di spostare l'issue — in quel caso il lock
-non era ancora stato preso, ed e' il momento in cui il sistema e' scoperto.
+Non dovrebbe succedere: la label `night:wip` e' il lock. Se e' successo, guarda
+se il primo run e' morto **prima** di applicarla — fra la lettura della coda e
+la scrittura della label c'e' la finestra in cui il sistema e' scoperto. E'
+stretta, ma con un solo run per notte non dovrebbe mai aprirsi.
+
+### `gh: command not found` dentro il run
+
+Non dovrebbe capitare: la documentazione dice che le sessioni cloud hanno
+strumenti GitHub integrati, autenticati tramite il proxy, senza configurazione.
+Se invece succede, il ripiego e' impostare `GH_TOKEN` nelle variabili
+dell'environment — ma prima verifica nel transcript che sia davvero questo il
+problema, e non un `gh` che fallisce per un motivo diverso.
 
 ## Dove guardare, in ordine
 
-1. Il commento su Linear — se il prompt ha funzionato, c'e' scritto tutto li'
+1. Il commento sulla issue — se il prompt ha funzionato, c'e' scritto tutto li'
 2. Il transcript del run su [claude.ai/code/routines](https://claude.ai/code/routines)
 3. `git log origin/main` e i branch `claude/*` — a volte il lavoro c'e' ma il PR no
