@@ -89,8 +89,19 @@ sudo -u postgres createdb app 2>/dev/null && echo "database 'app' creato" \
                                           || echo "database 'app' gia' presente"
 
 echo "── migrazioni ──────────────────────────────────────────"
-if [ -f drizzle.config.ts ]; then
-  pnpm drizzle-kit migrate || echo "migrazioni fallite — il run le rivedra'"
+# In un monorepo drizzle.config.ts non sta nella radice ma nel pacchetto che
+# possiede lo schema (packages/db). Cercarlo solo alla radice significa non
+# migrare mai, dicendo pero' "niente da migrare": il peggiore dei due esiti.
+DRIZZLE_DIR=""
+[ -f drizzle.config.ts ] && DRIZZLE_DIR="."
+for d in packages/*/ apps/*/; do
+  [ -f "${d}drizzle.config.ts" ] && DRIZZLE_DIR="${d%/}" && break
+done
+
+if [ -n "$DRIZZLE_DIR" ]; then
+  echo "schema Drizzle in ${DRIZZLE_DIR}"
+  (cd "$DRIZZLE_DIR" && pnpm drizzle-kit migrate) \
+    || echo "migrazioni fallite — il run le rivedra'"
 else
   echo "nessuno schema Drizzle: niente da migrare"
 fi
