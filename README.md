@@ -55,8 +55,9 @@ volta: lo stesso environment vale per tutti i progetti.
 
 1. **Il giorno 0**, interattivo — vedi [`docs/day-0.md`](docs/day-0.md).
    Un'ora circa. Produce PRD, DESIGN.md e una board Linear piena.
-2. **Il bootstrap**: `cd ~/projects/<slug> && nightly-init`
-3. **Verifica prima**: `nightly-init --check` controlla i prerequisiti senza toccare niente.
+2. **Il controllo a vuoto**: `cd ~/projects/<slug> && nightly-init --check`
+   verifica i prerequisiti senza creare né committare niente.
+3. **Il bootstrap**: `nightly-init`
 4. **La routine**: crea una routine su
    [claude.ai/code/routines](https://claude.ai/code/routines) incollando
    [`routine/prompt.md`](routine/prompt.md). `nightly-init` stampa la
