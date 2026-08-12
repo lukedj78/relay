@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# nightly-init — prepara un progetto dev-flow al lavoro notturno.
+# relay-init — prepara un progetto dev-flow al lavoro notturno.
 #
 # Da lanciare dentro la cartella del progetto, dopo il giorno 0 (vedi
 # docs/day-0.md). Crea il repo GitHub privato, committa la configurazione che
@@ -9,8 +9,8 @@
 #
 # Idempotente: rilanciarlo su un progetto gia' inizializzato non rompe nulla.
 #
-#   nightly-init           verifica, crea il repo, committa, pusha
-#   nightly-init --check   verifica soltanto, non tocca nulla
+#   relay-init           verifica, crea il repo, committa, pusha
+#   relay-init --check   verifica soltanto, non tocca nulla
 
 set -euo pipefail
 

@@ -3,7 +3,7 @@
 tasks-to-issues — trasforma .workflow/tasks.md in issue GitHub.
 
 Da lanciare nella cartella del progetto, dopo prd-to-tasks e dopo che il repo
-ha un remote (cioe' dopo nightly-init).
+ha un remote (cioe' dopo relay-init).
 
     tasks-to-issues --dry-run    mostra cosa creerebbe, non tocca nulla
     tasks-to-issues              crea le issue mancanti
@@ -148,7 +148,7 @@ def main():
 
     repo = run(["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"])
     if repo.returncode != 0:
-        die("nessun repo GitHub per questa cartella — lancia prima nightly-init")
+        die("nessun repo GitHub per questa cartella — lancia prima relay-init")
     repo = repo.stdout.strip()
 
     tasks = parse(TASKS.read_text(encoding="utf-8"))

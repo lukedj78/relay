@@ -99,7 +99,7 @@ Senza aspettare un progetto vero. Prima punta la CLI sull'environment con
 `/remote-env` dentro una sessione `claude`, poi:
 
 ```bash
-cd ~/projects/night-flow && claude --cloud "Esegui il comando check-tools. Poi verifica che PostgreSQL sia avviato con: sudo -u postgres psql -c 'SELECT version();' e che il database app esista con: sudo -u postgres psql -lqt. Riporta l'output dei tre comandi e nient'altro. Non modificare nessun file."
+cd ~/projects/relay && claude --cloud "Esegui il comando check-tools. Poi verifica che PostgreSQL sia avviato con: sudo -u postgres psql -c 'SELECT version();' e che il database app esista con: sudo -u postgres psql -lqt. Riporta l'output dei tre comandi e nient'altro. Non modificare nessun file."
 ```
 
 Gira contro questo stesso repo, che non ha un `package.json`. Nel log del setup

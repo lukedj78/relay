@@ -23,7 +23,7 @@ claude
 | 4 | `/image-to-design-md` o `/figma-to-design-md` | `docs/DESIGN.md` | la direzione visiva e' un giudizio |
 
 La coda vera — le issue GitHub — si crea **dopo**, con `tasks-to-issues`, perche'
-serve prima il repo remoto che crea `nightly-init`.
+serve prima il repo remoto che crea `relay-init`.
 
 ## Le due cose da non sbagliare
 
@@ -49,13 +49,13 @@ e' peggio.
 ## Poi
 
 ```bash
-nightly-init          # repo GitHub + configurazione della sandbox
+relay-init          # repo GitHub + configurazione della sandbox
 tasks-to-issues       # tasks.md → issue GitHub, con priorita' e numerazione
 ```
 
-e segui le istruzioni che `nightly-init` stampa per la routine.
+e segui le istruzioni che `relay-init` stampa per la routine.
 
-`tasks-to-issues` va lanciato **dopo** `nightly-init`, perche' ha bisogno del
+`tasks-to-issues` va lanciato **dopo** `relay-init`, perche' ha bisogno del
 repo remoto. E' idempotente: se aggiungi task al `tasks.md` puoi rilanciarlo, e
 crea solo quelli mancanti. Provalo prima con `--dry-run`.
 
