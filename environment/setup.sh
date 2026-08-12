@@ -16,6 +16,44 @@
 
 set -uo pipefail
 
+echo "── capacita' dell'ambiente ─────────────────────────────"
+# I blocchi che costano di piu' non sono i bug: sono le capacita' mancanti,
+# scoperte a meta' run. Qui l'ambiente dichiara cosa sa fare, in dieci secondi.
+# Nessuna riga di questo blocco fa fallire il setup: serve a diagnosticare.
+
+probe() {  # probe <etichetta> <url>
+  local code
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 "$2" 2>/dev/null || echo "000")
+  case "$code" in
+    2*|3*) printf '  rete   %-26s OK (%s)\n' "$1" "$code" ;;
+    403)   printf '  rete   %-26s NEGATO dalla policy — aggiungilo in Allowed domains\n' "$1" ;;
+    000)   printf '  rete   %-26s irraggiungibile\n' "$1" ;;
+    *)     printf '  rete   %-26s http %s\n' "$1" "$code" ;;
+  esac
+}
+
+probe "ui.shadcn.com"        "https://ui.shadcn.com/r/styles/new-york/button.json"
+probe "fonts.googleapis.com" "https://fonts.googleapis.com/css2?family=Inter"
+probe "fonts.gstatic.com"    "https://fonts.gstatic.com/"
+probe "api.resend.com"       "https://api.resend.com/"
+probe "eve.dev"              "https://eve.dev/docs"
+
+for v in AI_GATEWAY_API_KEY VERCEL_OIDC_TOKEN ANTHROPIC_API_KEY; do
+  [ -n "${!v:-}" ] && printf '  cred   %-26s presente\n' "$v" \
+                   || printf '  cred   %-26s assente\n' "$v"
+done
+
+if command -v google-chrome >/dev/null 2>&1 || command -v chromium >/dev/null 2>&1; then
+  printf '  tool   %-26s presente\n' "browser"
+elif [ -d "$HOME/.cache/ms-playwright" ]; then
+  printf '  tool   %-26s presente (playwright)\n' "browser"
+else
+  printf '  tool   %-26s ASSENTE — niente screenshot al passo 9\n' "browser"
+fi
+
+printf '  tool   %-26s %s\n' "node" "$(node -v 2>/dev/null || echo assente)"
+printf '  tool   %-26s %s\n' "pnpm" "$(pnpm -v 2>/dev/null || echo assente)"
+
 echo "── skill dev-flow ──────────────────────────────────────"
 # Il .claude/settings.json che relay-init scrive nel repo DICHIARA il
 # marketplace e il plugin, ma non li installa: in una sessione cloud
