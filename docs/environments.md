@@ -137,6 +137,7 @@ primo scaffold, non dopo:
 | `ui.shadcn.com` | registry e preset della CLI shadcn (`init`, `add`) |
 | `fonts.googleapis.com` | metadati dei font per `next/font/google` |
 | `fonts.gstatic.com` | i file `.woff2` scaricati in fase di build |
+| `ai-gateway.vercel.sh` | il catalogo dei modelli che il compilatore di eve interroga per le metadata della finestra di contesto: senza, `eve info`/`build`/`eval` falliscono con 403 |
 
 I primi due falliscono a tempo di scaffold, il terzo a tempo di build: senza
 tutti e tre si perde un run per volta, sempre per la stessa causa.

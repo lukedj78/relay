@@ -80,6 +80,7 @@ probe "fonts.googleapis.com" "https://fonts.googleapis.com/css2?family=Inter"
 probe "fonts.gstatic.com"    "https://fonts.gstatic.com/"
 probe "api.resend.com"       "https://api.resend.com/"
 probe "eve.dev"              "https://eve.dev/docs"
+probe "ai-gateway.vercel.sh" "https://ai-gateway.vercel.sh/v1/models/catalog"
 
 for v in AI_GATEWAY_API_KEY VERCEL_OIDC_TOKEN ANTHROPIC_API_KEY; do
   [ -n "${!v:-}" ] && printf '  cred   %-26s presente\n' "$v" \
