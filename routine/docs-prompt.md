@@ -47,7 +47,7 @@ Issue #<n>. Branch `claude/<...>`.
 **Verdetti del revisore** — <N confermate, N smentite, N non verificabili>
 <se ci sono state correzioni: quante, e cosa è caduto a ogni giro>
 
-**Prove** — <link raw a docs/evidence/PR-<n>/…, oppure «nessuna, perché …»>
+**Prove** — <link raw a docs/pr-assets/<issue>/…, oppure «nessuna, perché …»>
 ```
 
 Poi passa al §1.

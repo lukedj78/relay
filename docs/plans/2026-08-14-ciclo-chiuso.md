@@ -102,7 +102,7 @@ quelli non si discute di prompt: o funzionano o no.
 |---|---|
 | `.github/workflows/revert-on-broken-main.yml` | **nuovo** |
 | `docs/relazione.md` | **nuovo**, con l'intestazione e le voci storiche |
-| `docs/evidence/` | **nuova cartella** per gli screenshot |
+| `docs/pr-assets/` | **nuova cartella** per gli screenshot |
 
 ---
 
@@ -334,7 +334,7 @@ Aggiungere in coda al terzo strato del passo 9:
    Lo screenshot **va committato nel repository**, non allegato al PR:
 
    ```
-   docs/evidence/PR-<numero>/<nome-parlante>.png
+   docs/pr-assets/<issue>/<nome-parlante>.png
    ```
 
    Allegare immagini via API non funziona in questa sandbox e non ha mai
@@ -343,7 +343,7 @@ Aggiungere in coda al terzo strato del passo 9:
    diventano il materiale della relazione.
 
    Nel corpo del PR le linki con l'URL raw:
-   `https://github.com/<owner>/<repo>/blob/<branch>/docs/evidence/PR-<n>/<file>.png?raw=true`
+   `https://github.com/<owner>/<repo>/blob/<branch>/docs/pr-assets/<issue>/<file>.png?raw=true`
 
    Se non hai potuto catturare nulla — niente browser, rotta inesistente —
    **scrivilo**. «Nessuna prova visiva, perché …» è una riga legittima. Un PR
@@ -357,13 +357,13 @@ Nella lista dei contenuti del PR, sostituire `- lo screenshot` con:
 
 ```markdown
     - **le prove**: i link raw agli screenshot committati in
-      `docs/evidence/PR-<n>/`, oppure la riga che spiega perché non ce ne sono
+      `docs/pr-assets/<issue>/`, oppure la riga che spiega perché non ce ne sono
 ```
 
 - [ ] **Step 3: Creare la cartella nel progetto**
 
 ```bash
-cd ~/projects/predictionleagues && mkdir -p docs/evidence && printf 'Prove visive delle verifiche, una cartella per PR.\nCommittate dagli agenti, mai cancellate a mano.\n' > docs/evidence/README.md
+cd ~/projects/predictionleagues && mkdir -p docs/pr-assets && printf 'Prove visive delle verifiche, una cartella per PR.\nCommittate dagli agenti, mai cancellate a mano.\n' > docs/pr-assets/README.md
 ```
 
 - [ ] **Step 4: Commit**
@@ -433,7 +433,7 @@ Issue #<n>. Branch `claude/<...>`.
 **Verdetti del revisore** — <N confermate, N smentite, N non verificabili>
 <se ci sono state correzioni: quante, e cosa è caduto>
 
-**Prove** — <link raw a docs/evidence/PR-<n>/…, oppure «nessuna, perché …»>
+**Prove** — <link raw a docs/pr-assets/<issue>/…, oppure «nessuna, perché …»>
 ```
 
 Poi passa al §1.
@@ -872,7 +872,7 @@ cp ~/projects/predictionleagues/.github/workflows/revert-on-broken-main.yml ~/pr
 - [ ] **Step 5: Commit in entrambi i repo**
 
 ```bash
-cd ~/projects/predictionleagues && git add .github/workflows/revert-on-broken-main.yml docs/evidence docs/relazione.md && git commit -m "ci: annulla il merge se main si rompe, e apre una issue"
+cd ~/projects/predictionleagues && git add .github/workflows/revert-on-broken-main.yml docs/pr-assets docs/relazione.md && git commit -m "ci: annulla il merge se main si rompe, e apre una issue"
 cd ~/projects/relay && git add templates/revert-on-broken-main.yml && git commit -m "templates: l'Action di revert, per gli altri progetti"
 ```
 
@@ -1096,7 +1096,7 @@ sistema per affezione quando non funziona.
 - **Non sceglie N autori paralleli.** Il lock lo rende possibile, ma il vincolo
   che morde è la quota, non il lock. Si parte da due, si misura una settimana.
 - **Non tocca `predictionleagues` oltre i tre file** (`revert-on-broken-main.yml`,
-  `docs/relazione.md`, `docs/evidence/`). Il resto è lavoro del ciclo, non del
+  `docs/relazione.md`, `docs/pr-assets/`). Il resto è lavoro del ciclo, non del
   piano.
 - **Non riempie la relazione a ritroso.** Le voci storiche dei 18 PR già mergiati
   si potrebbero generare, ma sarebbero una ricostruzione, non una trascrizione —

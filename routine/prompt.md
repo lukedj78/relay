@@ -150,16 +150,15 @@ diventa un fatto del codice che nessuno ha mai approvato, e si scopre mesi dopo.
    Lo screenshot **va committato nel repository**, non allegato al PR:
 
    ```
-   docs/evidence/PR-<numero>/<nome-parlante>.png
+   docs/pr-assets/<numero-issue>/<nome-parlante>.png
    ```
 
-   Allegare immagini via API non funziona in questa sandbox e non ha mai
-   funzionato: tutti i PR di questo progetto dicono «catturato ma non
-   allegabile», e infatti nessuno ne contiene uno. Committate invece sono
+   Allegare immagini via API non funziona in questa sandbox: i PR che ci hanno
+   provato scrivono «catturato ma non allegabile». Committate invece sono
    versionate, sopravvivono al PR, e diventano il materiale della relazione.
 
    Nel corpo del PR le linki con l'URL raw:
-   `https://github.com/<owner>/<repo>/blob/<branch>/docs/evidence/PR-<n>/<file>.png?raw=true`
+   `https://github.com/<owner>/<repo>/raw/<branch>/docs/pr-assets/<issue>/<file>.png`
 
    Se non hai potuto catturare nulla — niente browser, rotta che non esiste
    ancora — **scrivilo**. «Nessuna prova visiva, perché …» è una riga legittima.
@@ -191,7 +190,7 @@ diventa un fatto del codice che nessuno ha mai approvato, e si scopre mesi dopo.
       hai presa nessuna, e in quel caso scrivi «nessuna»
     - cosa hai verificato, con l'esito
     - **le prove**: i link raw agli screenshot committati in
-      `docs/evidence/PR-<n>/`, oppure la riga che spiega perché non ce ne sono
+      `docs/pr-assets/<issue>/`, oppure la riga che spiega perché non ce ne sono
     - una sezione **"cosa NON ho verificato"** — obbligatoria, mai vuota
 
 12. Sulla issue: togli `night:wip`, metti `night:in-review`, e commenta il link

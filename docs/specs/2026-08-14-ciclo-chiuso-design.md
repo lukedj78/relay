@@ -165,21 +165,31 @@ i PR con la label `needs-human`, così un push tardivo non lo riaccende.
 
 ## 7. Le prove e la relazione
 
-### Gli screenshot non hanno mai funzionato
+### Gli screenshot: la convenzione esisteva già
 
-Il prompt dell'autore richiede uno screenshot nel PR dal primo giorno. Su otto PR
-controllati, **nessuno ne contiene uno**. I PR lo dicono da soli:
+Il prompt dell'autore richiede uno screenshot nel PR dal primo giorno, e per un
+po' non ha funzionato — allegarli via API dalla sandbox non riesce:
 
 > «Screenshot full-page a 375px catturati per tutte e tre le rotte durante la
 > sessione (non allegabili qui perché generati in locale nella sandbox, non
 > caricabili via API)» — PR #32
 
-Non è un requisito nuovo da aggiungere: è un requisito **rotto da riparare**.
+**Ma la routine ha poi trovato la strada da sola**, e senza che nessuno gliela
+dicesse: committare le immagini nel repository e linkarle con l'URL raw. Su
+`main` c'è già `docs/pr-assets/` con le prove dei PR #17, #41 e #49, e il PR #60
+la usa ancora.
 
-La via che funziona è committare le immagini nel repository:
+> **Una correzione a me stesso.** Avevo scritto «su otto PR controllati nessuno
+> contiene uno screenshot» e ci avevo costruito sopra una convenzione nuova,
+> `docs/evidence/`. Era vero di quel campione — che non conteneva i PR giusti — e
+> falso come generalizzazione. La convenzione da scrivere nel prompt non è una
+> nuova: è **quella che il sistema aveva già trovato**, resa esplicita perché
+> smetta di dipendere dal fatto che ogni run la reinventi.
+
+La forma, quindi, è quella già in uso:
 
 ```
-docs/evidence/PR-<n>/<nome>.png
+docs/pr-assets/<issue>/<nome>.png
 ```
 
 e linkarle nel corpo del PR. Sono versionate, sopravvivono al PR, e non
