@@ -12,6 +12,62 @@
 
 ---
 
+## Stato dell'esecuzione — 14 agosto 2026
+
+| task | stato |
+|---|---|
+| 1 — i tre interruttori | **1 su 3**: `delete_branch_on_merge` girato e verificato al primo merge |
+| 2 — provare il lock atomico | **fatto**, e registrato in `corpus.md` |
+| 3 — il lock nel prompt dell'autore | **fatto** (`b75d42e`) |
+| 4 — l'autore committa le prove | **fatto** (`b75d42e`) |
+| 5 — la relazione | **fatto** (`058827f`, e `docs/relazione.md` in PR #57) |
+| 6 — il revisore mergia | **fatto** (`bf3b175`) |
+| 7 — il correttore | **fatto** (`4851d32`), casi H e H2 passati |
+| 8 — l'Action di revert | **fatto**, mergiata in PR #57 |
+| 9 — lo spazzino | **fatto** (`4851d32`) |
+| 10 — `cadences.md` | **fatto** (`db9c9d4`) |
+| 11 — `relay-init` e README | **fatto** (`db9c9d4`) |
+| 12 — l'accensione | **bloccata** dai due interruttori mancanti |
+
+### Il vincolo scoperto eseguendo
+
+**La protezione dei branch non è disponibile sui repository privati con piano
+GitHub free.** Né la classic branch protection né i ruleset: entrambe rispondono
+`403 Upgrade to GitHub Pro or make this repository public`.
+
+Il prerequisito 1 del Task 1 era quindi **impossibile da soddisfare** così com'era
+scritto, e il piano lo dava per acquisito.
+
+Come è stato adattato: il revisore esegue `gh pr checks` e verifica da sé che ogni
+check sia verde, invece di contare su GitHub per rifiutare il merge. **Disciplina
+invece di imposizione.** La rete di revert resta sotto, ed è esattamente il caso
+per cui esiste.
+
+La differenza è reale e va detta: con la protezione, un revisore che ignora le
+istruzioni **non riesce** a mergiare con la CI rossa. Senza, ci riesce, e lo si
+scopre dal revert. In un sistema la cui premessa è «nessuno sta guardando», è la
+differenza fra un vincolo e un consiglio.
+
+### Due errori del piano, corretti eseguendo
+
+- **Il rilascio del lock mancava in due percorsi.** Il gate del passo 6 e il
+  triage rimandano al passo 4 dopo aver creato la ref, e il piano non diceva di
+  cancellarla. Quelle issue sarebbero rimaste bloccate per sempre, in modo
+  invisibile: sembrano libere, e ogni run che le prende riceve `422`.
+- **Il documentatore andava in loop.** Il suo PR viene mergiato, il merge lo
+  risveglia, scrive una voce su quel PR e ne apre un altro. Servono **due**
+  difese, non una: la guardia nel prompt (§0a) e il filtro sul trigger — perché i
+  filtri si sbagliano a configurare.
+
+### Un limite dell'harness, corretto
+
+`relay-dryrun` puntava a un PR ma non poteva iniettarci del contesto. Del
+correttore si poteva quindi collaudare solo il caso facile («non c'è niente da
+fare»), perché la review a cui reagisce non esiste su un PR storico. Ora accetta
+un quarto argomento, e le fixture stanno in `routine/fixtures/`.
+
+---
+
 ## Come si verifica
 
 Vale quanto stabilito il 14 agosto e non cambia: **l'atteso si scrive prima del
