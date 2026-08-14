@@ -1,7 +1,13 @@
 # Revisore e documentatore — design
 
 **Data:** 2026-08-13
-**Stato:** approvato in brainstorming, da tradurre in piano
+**Stato:** **SUPERATA** da [`2026-08-14-ciclo-chiuso-design.md`](2026-08-14-ciclo-chiuso-design.md)
+
+> Questa spec descriveva un revisore senza autorità di merge, e rimandava il ciclo di
+> correzione, il merge automatico e la parallelizzazione. Ma quelle tre cose erano la
+> richiesta: rimandandole tutte è rimasto in piedi l'unico pezzo che non chiude il
+> ciclo. Resta leggibile perché il mandato di falsificazione, la lista fissa e i due
+> gradi di smentita sono ripresi invariati dalla spec nuova.
 **Origine:** due giorni di uso reale su `predictionleagues` — 18 PR mergiati, 16 issue chiuse, un prodotto online
 
 ---
