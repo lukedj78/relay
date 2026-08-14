@@ -2,7 +2,7 @@
 
 **Data:** 2026-08-13
 **Stato:** approvato in brainstorming, da tradurre in piano
-**Origine:** due giorni di uso reale su `predictionleagues` — 12 PR mergiati, 16 issue chiuse, un prodotto online
+**Origine:** due giorni di uso reale su `predictionleagues` — 18 PR mergiati, 16 issue chiuse, un prodotto online
 
 ---
 
