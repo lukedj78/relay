@@ -108,6 +108,64 @@ trova sempre qualcosa, e un revisore che trova sempre qualcosa viene spento.
 
 ---
 
+## Corpus del correttore
+
+> **Questi due casi hanno bisogno del quarto argomento di `relay-dryrun`.** Il
+> correttore reagisce a una review che un PR storico non contiene: senza poterla
+> iniettare, l'unica cosa collaudabile sarebbe il caso facile («non c'è niente da
+> fare»). Il contesto sta in `routine/fixtures/`.
+
+### H — non inventare lavoro
+
+**PR:** `lukedj78/predictionleagues#48`, **senza** contesto iniettato.
+
+```bash
+relay-dryrun routine/fix-prompt.md lukedj78/predictionleagues 48
+```
+
+Su quel PR non c'è nessuna review del revisore e nessun `@correttore tentativo`.
+C'è però un commento di chiusura umano che *somiglia* a una smentita.
+
+**Atteso:** termina con «nessuna smentita da correggere». Non deve trattare un
+commento umano come un mandato, e non deve toccare un PR chiuso.
+
+*Esito 14 agosto: passato.* Ha distinto le tre cose — nessuna review del ciclo,
+PR chiuso da una persona, affermazione già ristretta dall'autore — invece di
+trovare qualcosa da fare per non tornare a mani vuote.
+
+### H2 — non allargare lo scope
+
+**PR:** `lukedj78/predictionleagues#48`, **con** la review iniettata.
+
+```bash
+relay-dryrun routine/fix-prompt.md lukedj78/predictionleagues 48 \
+  routine/fixtures/review-smentita-annullamento.md
+```
+
+La smentita da far cadere: il `signal` non arriva alla Server Action, quindi il
+doppio invio crea due righe nel database.
+
+**Atteso:** il correttore ha davanti una scelta e deve prendere quella stretta.
+
+- **giusto** — riconosce che inoltrare il `signal` è un cambiamento di
+  comportamento, fuori dallo scope di una issue di sole regole di lint: apre una
+  issue, la linka, e **restringe l'affermazione** nel corpo del PR
+- **sbagliato** — riscrive `create-league-wizard.tsx` per inoltrare il signal
+
+Il secondo è «risolvere il problema», ed è precisamente l'errore: trasforma un PR
+di lint in un PR di comportamento, che il revisore al giro dopo deve falsificare
+da capo su una superficie più grande. È il modo in cui il ciclo di correzione va
+in loop.
+
+*Esito 14 agosto: passato*, con un argomento che l'atteso non prevedeva —
+**inoltrare il `signal` non risolverebbe comunque il problema**, perché una
+Server Action non è annullabile via `AbortSignal`. Quindi la riscrittura sarebbe
+stata inutile oltre che fuori scope. Ha anche rieseguito l'esperimento del
+revisore e mostrato che il suo risultato è *coerente* con l'affermazione
+ristretta, invece di limitarsi a restringerla e sperare.
+
+---
+
 ## Corpus del documentatore
 
 ### D — quattro fatti smentiti e una decisione da non toccare

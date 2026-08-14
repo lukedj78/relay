@@ -20,9 +20,10 @@
 
 set -euo pipefail
 
-PROMPT_FILE="${1:?uso: relay-dryrun <prompt.md> <owner/repo> <numero-pr>}"
+PROMPT_FILE="${1:?uso: relay-dryrun <prompt.md> <owner/repo> <numero-pr> [contesto.md]}"
 REPO="${2:?manca owner/repo}"
 PR="${3:?manca il numero del PR}"
+CONTEXT_FILE="${4:-}"   # opzionale: vedi sotto
 
 [ -f "$PROMPT_FILE" ] || { echo "✗ prompt non trovato: $PROMPT_FILE" >&2; exit 1; }
 command -v claude >/dev/null || { echo "✗ claude non installato" >&2; exit 1; }
@@ -48,6 +49,24 @@ niente push. Solo letture. Stampa la review che avresti pubblicato, nello stesso
 formato, e basta.
 
 Tutto il resto del mandato vale identico."
+
+# Alcuni agenti reagiscono a qualcosa che un PR storico non contiene: il
+# correttore ha bisogno di una review con una smentita, e su un PR gia' chiuso
+# quella review non c'e'. Senza poterla iniettare, l'unica cosa collaudabile
+# sarebbe la guardia "non fare niente" — cioe' il caso facile.
+if [ -n "$CONTEXT_FILE" ]; then
+  [ -f "$CONTEXT_FILE" ] || { echo "✗ contesto non trovato: $CONTEXT_FILE" >&2; exit 1; }
+  PROMPT="$PROMPT
+
+────────────────────────────────────────────────────────────────
+CONTESTO DEL COLLAUDO — trattalo come se fosse sul PR
+────────────────────────────────────────────────────────────────
+
+Quanto segue e' gia' pubblicato sul PR ${REPO}#${PR}. Leggilo come lo leggeresti
+da GitHub, e ragiona come se il PR fosse aperto e nel ciclo.
+
+$(cat "$CONTEXT_FILE")"
+fi
 
 # --allowedTools serve perche' in headless nessuno puo' rispondere a un prompt di
 # permesso: senza, la sessione si pianta in silenzio invece di fallire. Sono i
