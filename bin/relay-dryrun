@@ -5,10 +5,16 @@
 # Serve a collaudare un prompt prima di metterlo in produzione, e a rilanciare il
 # corpus (routine/corpus.md) ogni volta che lo si tocca.
 #
-#   relay-dryrun routine/review-prompt.md lukedj78/predictionleagues 48
+# LANCIALO DALLA CARTELLA DEL PROGETTO, non da quella di relay: la routine vera
+# gira con il repo gia' clonato sotto i piedi, e un collaudo senza il repo
+# misura un agente piu' cieco di quello che poi metti in produzione.
+#
+#   cd ~/projects/predictionleagues
+#   relay-dryrun ~/projects/relay/routine/review-prompt.md lukedj78/predictionleagues 48
 #
 # Differenze dalla routine vera, da tenere a mente leggendo l'esito:
 #   - gira sul TUO Mac, non nella sandbox: ha i tuoi strumenti e la tua rete
+#   - il branch del PR NON e' checkoutato: vede main piu' il diff via gh
 #   - NON scrive su GitHub: l'ultima sezione del prompt e' sostituita
 #   - consuma la tua quota come una sessione normale
 
@@ -22,7 +28,9 @@ PR="${3:?manca il numero del PR}"
 command -v claude >/dev/null || { echo "✗ claude non installato" >&2; exit 1; }
 command -v gh     >/dev/null || { echo "✗ gh non installato" >&2; exit 1; }
 
-OUT="dryrun-$(basename "$PROMPT_FILE" .md)-${PR}.md"
+# L'esito va in una cartella temporanea, non nel repo: e' usa-e-getta, e lasciarlo
+# nella cartella del progetto significa sporcare un repo che non e' di relay.
+OUT="${TMPDIR:-/tmp}/dryrun-$(basename "$PROMPT_FILE" .md)-${PR}.md"
 
 # Il prompt va passato come ARGOMENTO, non su stdin: con `-p` il testo piped
 # diventa contesto e il prompt vero resta l'argomento, che qui non ci sarebbe.

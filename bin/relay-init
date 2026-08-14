@@ -110,7 +110,7 @@ NIGHT_FLOW="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")"
 cat <<EOF
 
 ────────────────────────────────────────────────────────────────
-  Il repo e' pronto. Mancano la coda e la routine.
+  Il repo e' pronto. Mancano la coda e le routine.
 ────────────────────────────────────────────────────────────────
 
   1. La coda — trasforma i task in issue GitHub:
@@ -118,21 +118,35 @@ cat <<EOF
        $NIGHT_FLOW/bin/tasks-to-issues --dry-run
        $NIGHT_FLOW/bin/tasks-to-issues
 
-  2. La routine — https://claude.ai/code/routines → New routine
+  2. Le routine — https://claude.ai/code/routines → New routine
 
-       Nome         $SLUG — notte
-       Repository   $GH_OWNER/$SLUG
-       Environment  nightly
-       Connectors   NESSUNO — togli tutto. Gli strumenti GitHub sono
-                    gia' dentro le sessioni cloud e non serve altro.
-       Modello      Sonnet
-       Trigger      Schedule → daily, 02:00
+     Tutte e tre: Repository $GH_OWNER/$SLUG, Environment nightly,
+     Modello Sonnet, e Connectors NESSUNO — l'API ne attacca alcuni
+     da sola, vanno tolti a mano e RICONTROLLATI dopo il salvataggio.
 
-       Prompt       incolla il contenuto di:
-                    $NIGHT_FLOW/routine/prompt.md
+     ┌─ $SLUG — notte ───────────────── ACCENDI QUESTA PER PRIMA
+     │  Trigger   Schedule → daily, 02:00
+     │  Prompt    $NIGHT_FLOW/routine/prompt.md
+     └─
 
-  3. Premi "Run now" e GUARDA il primo run. Il setup script sbaglia
-     sempre qualcosa la prima volta. Accendi il cron solo dopo che un
-     run e' arrivato fino al PR.
+     ┌─ $SLUG — revisore ────────────── quando l'autore e' rodato
+     │  Trigger   GitHub → pull_request, opened + reopened
+     │            (NON synchronize: sarebbe un run a ogni push)
+     │  Prompt    $NIGHT_FLOW/routine/review-prompt.md
+     └─
+
+     ┌─ $SLUG — documentatore ───────── per ultima
+     │  Trigger   GitHub → pull_request, closed, is merged = true
+     │  Prompt    $NIGHT_FLOW/routine/docs-prompt.md
+     └─
+
+     L'ordine non e' estetico: vedi $NIGHT_FLOW/docs/cadences.md.
+     Ogni routine e' un run pieno di quota, e il revisore parte a
+     ogni PR che l'autore apre.
+
+  3. Premi "Run now" sulla prima e GUARDA il run. Il setup script
+     sbaglia sempre qualcosa la prima volta. Accendi il cron solo
+     dopo che un run e' arrivato fino al PR — e le altre due solo
+     dopo che il primo PR ti e' sembrato buono.
 
 EOF

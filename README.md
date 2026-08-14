@@ -9,6 +9,22 @@ testimone e corre la frazione successiva.
 Monti questo repo una volta. Poi, per ogni progetto nuovo, sono due comandi e
 una form da compilare.
 
+## I tre agenti
+
+| | Cosa fa | Non fa |
+|---|---|---|
+| **Autore** | prende una issue, implementa, apre un PR verificato | mergia, sceglie librerie, inventa workaround |
+| **Revisore** | tenta di **falsificare** ogni affermazione del PR | giudica lo stile, corregge il codice, approva |
+| **Documentatore** | corregge le frasi che il merge ha reso **false** | riscrive, migliora, tocca le decisioni |
+
+L'autore verifica sé stesso, e questo ha un limite osservato: due run sullo
+stesso difetto, uno ha misurato lo schermo e l'altro il database, e solo il
+secondo aveva ragione. Il revisore esiste per quello. Il documentatore esiste
+perché i documenti diventano falsi in silenzio.
+
+Il perché per esteso sta in
+[`docs/specs/2026-08-13-revisore-e-documentatore-design.md`](docs/specs/2026-08-13-revisore-e-documentatore-design.md).
+
 ## L'idea in una riga
 
 **Tu decidi, lui esegue.** Le fasi di dev-flow che richiedono un giudizio —
@@ -98,6 +114,9 @@ allineato a mano.
 
 ## Cosa fa e cosa non fa
 
+La tabella qui sotto riguarda l'**autore**. Per gli altri due, vedi «I tre
+agenti» in cima.
+
 | Fa | Non fa |
 |---|---|
 | scaffolda l'app dal DESIGN.md | decide il DESIGN.md |
@@ -144,7 +163,12 @@ investimento che si ripaga a ogni run.
 | [`bin/relay-init`](bin/relay-init) | crea il repo GitHub, committa la config, verifica i prerequisiti |
 | [`bin/tasks-to-issues`](bin/tasks-to-issues) | `tasks.md` → issue GitHub, con priorità e numerazione |
 | [`environment/setup.sh`](environment/setup.sh) | il setup script del cloud environment |
-| [`routine/prompt.md`](routine/prompt.md) | il prompt della routine — il vero artefatto |
+| [`routine/prompt.md`](routine/prompt.md) | il prompt dell'autore — il vero artefatto |
+| [`routine/review-prompt.md`](routine/review-prompt.md) | il prompt del revisore |
+| [`routine/docs-prompt.md`](routine/docs-prompt.md) | il prompt del documentatore |
+| [`routine/corpus.md`](routine/corpus.md) | i casi di collaudo dei prompt, con l'atteso |
+| [`bin/relay-dryrun`](bin/relay-dryrun) | lancia un prompt su un PR vero, senza creare la routine |
+| [`docs/specs/`](docs/specs/) | le decisioni di design, con il perché |
 | [`templates/claude-settings.json`](templates/claude-settings.json) | come la sandbox cloud carica le 43 skill dev-flow |
 | [`docs/day-0.md`](docs/day-0.md) | la checklist della sessione interattiva |
 | [`docs/cadences.md`](docs/cadences.md) | le tre cadenze e in che ordine adottarle |

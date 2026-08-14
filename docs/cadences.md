@@ -1,4 +1,13 @@
-# Le tre cadenze
+# Le cadenze e le routine
+
+Da leggere sapendo che ci sono **due assi**, e che «tre» ricorre su entrambi per
+coincidenza:
+
+- **quante routine** — tre: l'autore, il revisore, il documentatore
+- **con che cadenza parte ciascuna** — le tre sezioni 1–3
+
+Le sezioni 1–3 parlano del secondo asse. La sezione «Le tre routine» mette
+insieme i due.
 
 `relay` non ha bisogno del buio. La prima versione si chiamava `night-flow` e
 girava alle due di notte, ma quella era una scelta di comodo travestita da
@@ -73,6 +82,44 @@ Non partire dalla catena. L'ordine che consiglio:
 
 Aggiungere o togliere un trigger a una routine esistente non è una scelta
 definitiva: si fa dalla sua pagina di modifica in qualsiasi momento.
+
+## Le tre routine
+
+| routine | trigger | costa | cresce con |
+|---|---|---|---|
+| **autore** | `Schedule` + `GitHub` sul merge | un run pieno | i task che restano in coda |
+| **revisore** | `GitHub` su PR aperto o riaperto | un run pieno | **i PR che apri** |
+| **documentatore** | `GitHub` su merge riuscito | quasi zero, di norma | i merge che toccano i documenti |
+
+Condividono **un solo environment**, `nightly`: stesse credenziali, stesso setup,
+stessi domini consentiti. Si distinguono per prompt e per trigger, non per
+ambiente. Non creare un environment per routine — si moltiplicherebbero i posti
+in cui aggiornare `DATABASE_URL`.
+
+### Cosa succede alla spesa
+
+L'autore era una cadenza sola e prevedibile. Con tre routine il conto cambia
+forma, e vale la pena vederlo scritto prima di accendere tutto:
+
+- il **revisore** parte a ogni PR aperto. Se l'autore apre un PR al giorno, è un
+  run in più al giorno. Se acceleri l'autore, acceleri anche questo: non è una
+  spesa che si aggiunge una volta, è una che si aggancia alla prima.
+- il **documentatore** parte a ogni merge, ma la maggior parte delle volte esce
+  in pochi secondi con «niente da riconciliare». È il più economico dei tre —
+  **se** l'uscita rapida funziona. Se non funziona è il più caro, perché parte
+  sempre. È la prima cosa da guardare nei suoi primi run.
+
+Il revisore **non** parte su `synchronize`, cioè a ogni push sul branch di un PR
+aperto. Sarebbe la scelta più completa e anche il modo più rapido di esaurire i
+tetti orari dei trigger GitHub.
+
+### In che ordine accenderle
+
+1. **L'autore da solo**, come oggi. Finché non hai una settimana di run.
+2. **Il revisore.** È quello che restituisce di più: su dieci difetti veri di
+   `predictionleagues`, sei non erano leggibili in un diff.
+3. **Il documentatore**, per ultimo. È il più economico, ma serve solo quando i
+   documenti hanno già cominciato a divergere — cioè non il primo mese.
 
 ## Una nota sul nome dell'environment
 
