@@ -96,14 +96,31 @@ raggiungibile da chiunque abbia il link. Il bypass tiene la protezione accesa pe
 le persone e lascia passare solo chi ha il segreto — che e' esattamente la
 distinzione che serve.
 
-**Due trappole:**
+**Serve solo per il progetto Vercel che ha delle pagine.** In un monorepo
+web+agent i progetti Vercel sono due, ma il revisore guarda pagine, intestazioni
+HTTP e bundle del client: tutte cose che stanno nel progetto web. L'agente non ha
+interfaccia da ispezionare, e finche' nessun controllo ne ha bisogno non gli
+serve un segreto.
 
-- se il segreto viene rigenerato, i deployment gia' fatti continuano a
-  riferirsi al vecchio valore: va rifatto un deploy, altrimenti il revisore
-  ricomincia a ricevere `302`
-- il segreto e' **per progetto**, non per account: un progetto nuovo ne vuole uno
-  suo, ed e' il primo caso in cui conviene un `nightly-<progetto>` invece
-  dell'environment condiviso
+**Se viene rigenerato**, i deployment gia' fatti continuano a riferirsi al
+vecchio valore: va rifatto un deploy, altrimenti il revisore ricomincia a
+ricevere `302`.
+
+### La conseguenza sull'environment condiviso
+
+Questo segreto e' **vero** e **per progetto**. Sono le due proprieta' che
+`nightly` non puo' reggere: la variabile e' una sola, e il valore giusto dipende
+da quale progetto sta girando.
+
+Quindi **ogni progetto che accende il ciclo chiuso ha bisogno del suo
+`nightly-<progetto>`**. E' il primo caso in cui l'environment condiviso non basta
+piu' — fino a qui era una comodita' senza costi, da qui in poi vale solo per i
+progetti che restano a ciclo aperto.
+
+Il duplicato costa poco: stesso setup script, stesse variabili finte, piu' la
+riga vera. Ma va fatto, e va fatto una volta per progetto: due progetti che
+condividono l'environment condividerebbero anche il segreto sbagliato, e il
+secondo riceverebbe `302` senza che sia ovvio perche'.
 
 ## `nightly-<progetto>` — quando serve un segreto vero
 

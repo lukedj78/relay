@@ -163,16 +163,36 @@ cat <<EOF
        $NIGHT_FLOW/bin/tasks-to-issues --dry-run
        $NIGHT_FLOW/bin/tasks-to-issues
 
-  2. Le due Action — copiale nel progetto:
+  2. La chiave delle anteprime — UNA VOLTA PER PROGETTO VERCEL:
+
+     Vercel → progetto (quello con le PAGINE, non l'agente) →
+     Settings → Deployment Protection → Protection Bypass for
+     Automation → Create, etichetta "relay". Disponibile su tutti
+     i piani.
+
+     Poi duplica l'environment 'nightly' in 'nightly-$SLUG' e
+     mettici la variabile:
+
+       VERCEL_AUTOMATION_BYPASS_SECRET = <il segreto>
+
+     Serve un environment dedicato perche' il segreto e' vero e
+     cambia da progetto a progetto: 'nightly' ha una variabile
+     sola, e due progetti che lo condividono condividerebbero il
+     segreto sbagliato. Vedi $NIGHT_FLOW/docs/environments.md.
+
+     NON disattivare Vercel Authentication: renderebbe ogni
+     anteprima raggiungibile da chiunque abbia il link.
+
+  3. Le due Action — copiale nel progetto:
 
        cp $NIGHT_FLOW/templates/revert-on-broken-main.yml .github/workflows/
 
      La CI (verify.yml) e' del progetto e dev'esserci gia'.
 
-  3. Le routine — https://claude.ai/code/routines → New routine
+  4. Le routine — https://claude.ai/code/routines → New routine
 
-     Tutte e cinque: Repository $GH_OWNER/$SLUG, Environment nightly,
-     Modello Sonnet, e Connectors NESSUNO — l'API ne attacca alcuni
+     Tutte e cinque: Repository $GH_OWNER/$SLUG, Environment
+     nightly-$SLUG (vedi il punto 2), Modello Sonnet, e Connectors NESSUNO — l'API ne attacca alcuni
      da sola, vanno tolti a mano e RICONTROLLATI dopo il salvataggio.
 
      ┌─ $SLUG — autore ──────────────── ACCENDI QUESTA PER PRIMA
@@ -211,7 +231,7 @@ cat <<EOF
          risponde ai propri PR: apre un PR, il merge lo risveglia,
          ne apre un altro. Il tetto giornaliero finisce in un'ora.
 
-  4. Premi "Run now" sull'autore e GUARDA il run. Il setup script
+  5. Premi "Run now" sull'autore e GUARDA il run. Il setup script
      sbaglia sempre qualcosa la prima volta.
 
      Poi accendi UNA routine per volta, nell'ordine dei riquadri, e
