@@ -14,6 +14,27 @@ relay-dryrun routine/review-prompt.md lukedj78/predictionleagues 48
 
 ---
 
+## Il lock — non è un collaudo di prompt, è un fatto
+
+Provato il 14 agosto 2026 su `lukedj78/predictionleagues`:
+
+| operazione | esito osservato |
+|---|---|
+| `POST /git/refs` su una ref nuova | crea, restituisce `refs/heads/claude/lock-test-…` |
+| `POST /git/refs` sulla **stessa** ref | **`422 Reference already exists`** |
+| `git push origin <sha>:<stessa ref>` | **`Everything up-to-date`**, exit 0 — riesce |
+
+L'ultima riga è il motivo per cui il lock **non può essere un push**: due run che
+partono dallo stesso `main` fanno entrambi un push che riesce, e si credono
+entrambi proprietari del branch. È lo stesso difetto delle label `night:wip` in
+una forma più convincente.
+
+Se un giorno GitHub cambiasse il comportamento della riga 2, la parallelizzazione
+diventerebbe insicura **in silenzio**. La prova va rilanciata quando si tocca il
+lock: è il Task 2 del piano del ciclo chiuso.
+
+---
+
 ## Corpus del revisore
 
 ### A — la schermata al posto del database

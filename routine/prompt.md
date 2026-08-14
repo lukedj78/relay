@@ -41,9 +41,29 @@ aggredibile stanotte.
    aggredibile stanotte"** e spiega in una riga perché: coda vuota, tutto
    bloccato, o tutto già in review. Non inventare lavoro.
 
-5. Metti la label `night:wip` sulla issue scelta e commenta con la data e il
-   link a questa sessione. **È il lock** che impedisce a un altro run di
-   prendere lo stesso lavoro.
+5. **Prendi il lock creando la ref del branch.** Non è una formalità: è l'unica
+   cosa che impedisce a un altro run di lavorare sulla tua stessa issue.
+
+   ```bash
+   gh api repos/:owner/:repo/git/refs -X POST \
+     -f ref="refs/heads/claude/<numero-issue>-<slug>" \
+     -f sha="$(git rev-parse origin/main)"
+   ```
+
+   - **riesce** → il lavoro è tuo, prosegui
+   - **`422 Reference already exists`** → l'ha preso un altro run: **torna al
+     passo 4** e prendi la successiva. Non insistere, non forzare, non cambiare
+     nome al branch per aggirarlo.
+
+   Poi metti anche la label `night:wip` e commenta con la data e il link a questa
+   sessione. **La label non è il lock**: è un'etichetta perché una persona capisca
+   cosa sta succedendo guardando la board.
+
+   Perché non basta un `git push`: se il branch esiste già e il push è
+   fast-forward, **riesce** — risponde «Everything up-to-date» ed esce con
+   successo. Due run partiti dallo stesso `main` si crederebbero entrambi
+   proprietari del branch. È lo stesso difetto che il 13 agosto ha prodotto i
+   PR #47 e #48 sulla stessa issue, in una forma più convincente.
 
 ## Il gate di qualità
 
@@ -53,9 +73,9 @@ aggredibile stanotte.
    - richiede una decisione di prodotto
    - richiederebbe di scegliere una libreria (UI, form, stato, qualsiasi)
 
-   allora **non implementarla**: commenta cosa manca esattamente, togli
-   `night:wip`, metti `needs-spec`, e **torna al passo 4 per prendere la
-   successiva**.
+   allora **non implementarla**: commenta cosa manca esattamente, **rilascia il
+   lock** (passo 13), togli `night:wip`, metti `needs-spec`, e **torna al passo 4
+   per prendere la successiva**.
 
    Una issue scritta male non deve costarti la notte. Fai al massimo **tre**
    tentativi: se dopo tre nessuna supera il gate, termina e dillo.
@@ -76,8 +96,9 @@ Davanti a un dubbio, una domanda sola:
   **«decisioni prese»** con: cosa hai deciso, da quale documento o calcolo
   discende, e cosa hai scartato. Una riga per decisione.
 - **No → fermati.** È una scelta di prodotto o di gusto, e nessun documento la
-  contiene. Commenta sulla issue con la domanda ben posta e le opzioni, togli
-  `night:wip`, metti `needs-spec`, torna al passo 4.
+  contiene. Commenta sulla issue con la domanda ben posta e le opzioni,
+  **rilascia il lock** (passo 13), togli `night:wip`, metti `needs-spec`, torna
+  al passo 4.
 
 Due esempi veri, nati dallo stesso difetto:
 
@@ -126,6 +147,25 @@ diventa un fatto del codice che nessuno ha mai approvato, e si scopre mesi dopo.
    Un build verde non è una verifica. Se non hai aperto la pagina, non l'hai
    verificata.
 
+   Lo screenshot **va committato nel repository**, non allegato al PR:
+
+   ```
+   docs/evidence/PR-<numero>/<nome-parlante>.png
+   ```
+
+   Allegare immagini via API non funziona in questa sandbox e non ha mai
+   funzionato: tutti i PR di questo progetto dicono «catturato ma non
+   allegabile», e infatti nessuno ne contiene uno. Committate invece sono
+   versionate, sopravvivono al PR, e diventano il materiale della relazione.
+
+   Nel corpo del PR le linki con l'URL raw:
+   `https://github.com/<owner>/<repo>/blob/<branch>/docs/evidence/PR-<n>/<file>.png?raw=true`
+
+   Se non hai potuto catturare nulla — niente browser, rotta che non esiste
+   ancora — **scrivilo**. «Nessuna prova visiva, perché …» è una riga legittima.
+   Un PR che tace sull'assenza di prove è indistinguibile da uno che non ne
+   aveva bisogno.
+
 10. **Prima di aprire il PR, porta `main` dentro il branch**: `git fetch origin`
     e `git merge origin/main`. Il tuo branch è partito da uno stato di `main`
     che nel frattempo può essere avanzato — un altro PR mergiato mentre
@@ -150,14 +190,28 @@ diventa un fatto del codice che nessuno ha mai approvato, e si scopre mesi dopo.
     - **le decisioni prese** (vedi il triage) — la sezione manca solo se non ne
       hai presa nessuna, e in quel caso scrivi «nessuna»
     - cosa hai verificato, con l'esito
-    - lo screenshot
+    - **le prove**: i link raw agli screenshot committati in
+      `docs/evidence/PR-<n>/`, oppure la riga che spiega perché non ce ne sono
     - una sezione **"cosa NON ho verificato"** — obbligatoria, mai vuota
 
 12. Sulla issue: togli `night:wip`, metti `night:in-review`, e commenta il link
     al PR.
 
-13. **Se ti sei fermato prima della fine**, togli `night:wip` e commenta cosa è
-    successo e a che passo. Non lasciare il lock: bloccherebbe la notte dopo.
+13. **Se ti sei fermato prima di aprire il PR**, rilascia il lock: cancella la
+    ref che hai creato al passo 5, togli `night:wip`, e commenta sulla issue cosa
+    è successo e a che passo.
+
+    ```bash
+    gh api "repos/:owner/:repo/git/refs/heads/claude/<numero-issue>-<slug>" -X DELETE
+    ```
+
+    **Un lock non rilasciato blocca quella issue per sempre**, e nessuno se ne
+    accorge: la issue resta aperta e sembra disponibile, ma ogni run che la
+    prende riceve `422` e passa oltre. È il modo più silenzioso in cui questo
+    sistema può smettere di funzionare.
+
+    **Se invece il PR è già aperto, non cancellare niente**: da lì in poi il
+    branch serve, e lo cancella GitHub al merge.
 
 ## Regole assolute
 
