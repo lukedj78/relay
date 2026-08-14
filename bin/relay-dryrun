@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#
+# relay-dryrun — lancia un prompt di relay su un PR vero, senza creare la routine.
+#
+# Serve a collaudare un prompt prima di metterlo in produzione, e a rilanciare il
+# corpus (routine/corpus.md) ogni volta che lo si tocca.
+#
+#   relay-dryrun routine/review-prompt.md lukedj78/predictionleagues 48
+#
+# Differenze dalla routine vera, da tenere a mente leggendo l'esito:
+#   - gira sul TUO Mac, non nella sandbox: ha i tuoi strumenti e la tua rete
+#   - NON scrive su GitHub: l'ultima sezione del prompt e' sostituita
+#   - consuma la tua quota come una sessione normale
+
+set -euo pipefail
+
+PROMPT_FILE="${1:?uso: relay-dryrun <prompt.md> <owner/repo> <numero-pr>}"
+REPO="${2:?manca owner/repo}"
+PR="${3:?manca il numero del PR}"
+
+[ -f "$PROMPT_FILE" ] || { echo "✗ prompt non trovato: $PROMPT_FILE" >&2; exit 1; }
+command -v claude >/dev/null || { echo "✗ claude non installato" >&2; exit 1; }
+command -v gh     >/dev/null || { echo "✗ gh non installato" >&2; exit 1; }
+
+OUT="dryrun-$(basename "$PROMPT_FILE" .md)-${PR}.md"
+
+# Il prompt va passato come ARGOMENTO, non su stdin: con `-p` il testo piped
+# diventa contesto e il prompt vero resta l'argomento, che qui non ci sarebbe.
+# Sono ~6KB, ben sotto ARG_MAX.
+PROMPT="$(cat "$PROMPT_FILE")
+
+────────────────────────────────────────────────────────────────
+COLLAUDO — questa sezione sovrascrive le istruzioni di pubblicazione
+────────────────────────────────────────────────────────────────
+
+Sei in collaudo. Il PR da esaminare e' **${REPO}#${PR}**.
+
+NON scrivere niente su GitHub: niente review, niente commenti, niente label,
+niente push. Solo letture. Stampa la review che avresti pubblicato, nello stesso
+formato, e basta.
+
+Tutto il resto del mandato vale identico."
+
+# --allowedTools serve perche' in headless nessuno puo' rispondere a un prompt di
+# permesso: senza, la sessione si pianta in silenzio invece di fallire. Sono i
+# soli strumenti che servono, tutti in lettura salvo Bash — che pero' gli serve
+# per `gh pr view` e per interrogare l'anteprima.
+claude -p "$PROMPT" \
+  --output-format text \
+  --allowedTools "Bash,Read,Grep,Glob,WebFetch" \
+  > "$OUT"
+
+echo "✓ esito in $OUT"
+echo
+echo "Ora confrontalo con l'atteso in routine/corpus.md."
+echo "Il confronto lo fai TU: se lo fa lo script, stai chiedendo al sistema"
+echo "di giudicare se stesso."
