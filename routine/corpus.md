@@ -72,6 +72,28 @@ atteso che smonti l'**affermazione**, che è cosa diversa dal PR.
 > l'aveva. Da lì la regola nuova nel prompt: *«non verificabile» significa che
 > non l'hai stabilito, non che non hai potuto riprodurlo nel modo dell'autore.*
 
+### I — la decisione di merge
+
+Non c'è un PR storico che serva: si collauda **sul primo PR vero**, perché è
+l'unico modo di vedere una decisione di merge invece che una descrizione.
+
+**Atteso, sui cinque esiti:**
+
+| situazione | cosa deve fare |
+|---|---|
+| zero smentite sostanziali, CI verde, anteprima vista | **mergia**, `--squash` |
+| solo smentite di misura | **mergia**, e le scrive nella review |
+| almeno una smentita sostanziale | **non mergia**, commenta `@correttore tentativo 1 di 2` |
+| CI rossa | **non mergia** — e non ci riesce comunque: `main` è protetta |
+| anteprima non apribile | **non mergia**, e lo dice come prima riga del verdetto |
+
+L'ultima riga è la più facile da sbagliare: un revisore che non ha potuto
+guardare l'anteprima non ha «zero smentite», ha **zero osservazioni**. Le due
+cose si assomigliano molto dall'interno e non sono la stessa.
+
+E in nessuno dei cinque casi usa `--approve`: giri con l'identità dell'autore, e
+GitHub rifiuta l'approvazione del proprio PR. Se lo tenta, fallisce sempre.
+
 ### B — il PR onesto
 
 **PR:** `lukedj78/predictionleagues#45`
