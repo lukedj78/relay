@@ -30,40 +30,51 @@ riguarda. Se manca ancora: emetti i verdetti che puoi emettere, e marca gli altr
 `non verificabile — anteprima assente`. **Non fingere di averla vista.** Una
 review che tace sull'anteprima mancante sembra completa e non lo è.
 
-### L'anteprima è protetta: come si entra
+### Se l'anteprima ti chiede di autenticarti
 
-Le anteprime sono dietro Vercel Deployment Protection, quindi una richiesta
-anonima riceve `302` verso `vercel.com/sso-api`. **Non è un ostacolo: hai la
-chiave.** L'environment ha la variabile `VERCEL_AUTOMATION_BYPASS_SECRET`.
+Se ricevi `302` verso `vercel.com/sso-api`, quel progetto ha ancora attiva la
+protezione delle anteprime di Vercel.
 
-Mettila su **ogni** richiesta all'anteprima, in due intestazioni:
+**Il caso normale è che sia spenta**, perché per un progetto la cui produzione è
+già pubblica non protegge niente: l'anteprima serve la stessa applicazione, con
+la stessa autenticazione davanti agli stessi dati.
+
+Prima di arrenderti, guarda se l'environment ha la chiave — alcuni progetti
+tengono l'anteprima chiusa apposta, e in quel caso ce l'hai:
+
+```bash
+VAR="VERCEL_BYPASS_$(basename "$PWD" | tr '[:lower:]-' '[:upper:]_')"
+BYPASS=$(printenv "$VAR")
+```
+
+Se c'è, mettila su **ogni** richiesta, in due intestazioni:
 
 ```bash
 curl -sS -D- -o/dev/null \
-  -H "x-vercel-protection-bypass: $VERCEL_AUTOMATION_BYPASS_SECRET" \
+  -H "x-vercel-protection-bypass: $BYPASS" \
   -H "x-vercel-set-bypass-cookie: true" \
   "$PREVIEW_URL/it/leagues"
 ```
 
-La seconda intestazione serve al browser, non a `curl`: fa impostare un cookie,
-così le navigazioni successive dentro la stessa sessione passano da sole. Senza,
-la prima pagina si apre e il primo click torna alla schermata di login di Vercel.
+La seconda serve al browser, non a `curl`: fa impostare un cookie, così le
+navigazioni successive passano da sole. Senza, la prima pagina si apre e il primo
+click torna alla schermata di login.
 
-**Non stampare mai il valore del segreto**: né nella review, né nei log, né in un
-comando che lo echeggi. Usa sempre la variabile.
+**Non stampare mai il valore della chiave**, né nella review né nei log.
 
-**Attenzione a non confonderlo con il cookie di sessione dell'applicazione.** Il
-cookie di bypass è di Vercel e apre il deployment; il controllo n. 1 della lista
-fissa riguarda il cookie di *sessione* dell'app, che è un'altra cosa. Per quel
-controllo devi mandare il bypass (altrimenti non arrivi all'app) **senza** nessun
-cookie di sessione — ed è proprio ciò che l'app deve rifiutare.
+**Attenzione a non confonderla con il cookie di sessione dell'applicazione.** Il
+bypass apre il *deployment*; il controllo n. 1 della lista fissa riguarda il
+cookie di *sessione* dell'app, che è un'altra cosa. Per quel controllo mandi il
+bypass — altrimenti non arrivi all'app — **senza** cookie di sessione, ed è
+proprio quello che l'app deve rifiutare.
 
-**Se ricevi ancora `302` verso `vercel.com/sso-api` con le intestazioni al
-posto giusto**, il segreto è mancante o scaduto — succede se è stato rigenerato
-senza redeploy. Allora sì: emetti i verdetti che puoi, marca gli altri `non
-verificabile — anteprima non accessibile`, e **dillo come prima riga del
-Verdetto**. È una cosa che una persona sistema una volta sola, e finché non lo fa
-questa routine gira quasi a vuoto.
+**Se la variabile non c'è**, non è un tuo problema da risolvere: emetti i
+verdetti che puoi, marca gli altri `non verificabile — anteprima non
+accessibile`, e **dillo come prima riga del Verdetto**, scrivendo che si sistema
+spegnendo Vercel Authentication sulle anteprime del progetto. È una cosa che una
+persona fa una volta sola, e finché non la fa questa routine gira quasi a vuoto —
+e soprattutto **non mergia niente**, perché aprire l'anteprima è una delle tre
+condizioni.
 
 ## 2. Il mandato: falsificare
 

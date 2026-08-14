@@ -74,53 +74,73 @@ altro. Un progetto che non usa Resend ignora `RESEND_API_KEY` senza accorgersene
 La lista cresce e non si pulisce mai. Va bene: non c'e' niente dentro che valga
 la pena proteggere.
 
-### L'eccezione: la chiave delle anteprime
+### Le anteprime di deploy: un interruttore, non un segreto
 
-C'e' una variabile che **non** e' finta, e che il ciclo chiuso richiede:
+Il revisore deve poter **aprire l'anteprima del PR**: e' la terza delle sue tre
+condizioni di merge, e senza non mergia niente. Su dieci difetti veri trovati in
+`predictionleagues`, sei non erano leggibili in un diff — si vedevano solo
+facendo girare la cosa vera.
+
+Vercel pero' accende **Vercel Authentication** in *Standard Protection* su ogni
+progetto nuovo, e le anteprime rispondono `302` verso `vercel.com/sso-api`.
+
+**La risposta e' spegnerla, non aggirarla:**
+
+> Vercel → progetto → Settings → Deployment Protection →
+> **Vercel Authentication** → *Disabled* → Save
+
+Niente segreti, niente token, niente variabili, niente da tenere allineato fra
+due sistemi. Per il progetto successivo e' lo stesso identico interruttore.
+
+#### Perche' non e' un cedimento sulla sicurezza
+
+Perche' in un progetto pubblico **la produzione e' gia' aperta**. L'anteprima
+serve la stessa applicazione, con la stessa autenticazione davanti agli stessi
+dati. Tenere chiusa l'anteprima mentre la produzione risponde a chiunque non
+protegge i dati: protegge solo il fatto che una funzionalita' non ancora
+rilasciata si veda in anticipo, su un URL che vive in un repository privato.
+
+Vale la pena scriverlo perche' e' il tipo di ragionamento che si salta: si vede
+un blocco, si cerca la chiave, e non ci si chiede **cosa stia proteggendo**. La
+domanda giusta viene prima della soluzione tecnica.
+
+#### L'eccezione: quando l'anteprima deve restare chiusa
+
+Ci sono progetti in cui e' vero il contrario — lavoro per clienti, prodotti non
+ancora annunciati, anteprime con dati veri. Li' la protezione resta accesa, e il
+revisore entra con una chiave: **Protection Bypass for Automation**.
+
+Vercel → progetto → Settings → Deployment Protection → *Protection Bypass for
+Automation* → **Create**. Disponibile su tutti i piani.
+
+Il segreto e' **per progetto**, quindi va nel nome della variabile e non nel suo
+valore, altrimenti servirebbe un environment per progetto:
 
 ```
-VERCEL_AUTOMATION_BYPASS_SECRET    <il segreto vero del progetto>
+VERCEL_BYPASS_NOME_DEL_PROGETTO    <il segreto>
 ```
 
-Serve al revisore per aprire le anteprime di deploy. Senza, la sua terza
-condizione di merge — «ho potuto aprire l'anteprima» — e' sempre falsa, e non
-mergia mai niente.
+Nome = `VERCEL_BYPASS_` piu' il nome della cartella in maiuscolo, con i trattini
+diventati underscore. Il revisore lo ricava da se':
 
-**Come si genera:** Vercel → progetto → Settings → Deployment Protection →
-*Protection Bypass for Automation* → **Create**, con un'etichetta tipo «relay».
-E' disponibile su **tutti i piani**, Hobby compreso.
+```bash
+VAR="VERCEL_BYPASS_$(basename "$PWD" | tr '[:lower:]-' '[:upper:]_')"
+BYPASS=$(printenv "$VAR")
+```
 
-**Perche' non basta disattivare la protezione.** Si potrebbe mettere Vercel
-Authentication su *Disabled* e finirebbe li', ma cosi' ogni anteprima diventa
-raggiungibile da chiunque abbia il link. Il bypass tiene la protezione accesa per
-le persone e lascia passare solo chi ha il segreto — che e' esattamente la
-distinzione che serve.
+(`printenv` e non `${!VAR}`: la seconda e' sintassi bash e la sandbox non
+garantisce bash.)
 
-**Serve solo per il progetto Vercel che ha delle pagine.** In un monorepo
-web+agent i progetti Vercel sono due, ma il revisore guarda pagine, intestazioni
-HTTP e bundle del client: tutte cose che stanno nel progetto web. L'agente non ha
-interfaccia da ispezionare, e finche' nessun controllo ne ha bisogno non gli
-serve un segreto.
+Poi due intestazioni su ogni richiesta: `x-vercel-protection-bypass` con il
+segreto, e `x-vercel-set-bypass-cookie: true` — la seconda serve al browser,
+perche' senza il cookie la prima pagina si apre e il primo click torna alla
+schermata di login.
 
-**Se viene rigenerato**, i deployment gia' fatti continuano a riferirsi al
-vecchio valore: va rifatto un deploy, altrimenti il revisore ricomincia a
-ricevere `302`.
+**Se il segreto viene rigenerato**, i deployment gia' fatti puntano al vecchio
+valore: serve un redeploy.
 
-### La conseguenza sull'environment condiviso
-
-Questo segreto e' **vero** e **per progetto**. Sono le due proprieta' che
-`nightly` non puo' reggere: la variabile e' una sola, e il valore giusto dipende
-da quale progetto sta girando.
-
-Quindi **ogni progetto che accende il ciclo chiuso ha bisogno del suo
-`nightly-<progetto>`**. E' il primo caso in cui l'environment condiviso non basta
-piu' — fino a qui era una comodita' senza costi, da qui in poi vale solo per i
-progetti che restano a ciclo aperto.
-
-Il duplicato costa poco: stesso setup script, stesse variabili finte, piu' la
-riga vera. Ma va fatto, e va fatto una volta per progetto: due progetti che
-condividono l'environment condividerebbero anche il segreto sbagliato, e il
-secondo riceverebbe `302` senza che sia ovvio perche'.
+**Questa e' la strada lunga.** Prendila solo se hai risposto «si» alla domanda:
+*l'anteprima contiene qualcosa che la produzione non mostra gia' a chiunque?*
 
 ## `nightly-<progetto>` — quando serve un segreto vero
 

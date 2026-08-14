@@ -109,11 +109,14 @@ Non tutte insieme, e non a caso.
   frase che nessuno fa rispettare. E **niente approvazioni obbligatorie**: le
   routine agiscono con la tua identità GitHub, e nessuno può approvare il proprio
   PR. Sarebbe un ciclo impossibile da chiudere per costruzione.
-- **una chiave per le anteprime di deploy** — non disattivare la protezione: si
-  genera un *Protection Bypass for Automation* su Vercel (disponibile su tutti i
-  piani) e lo si mette nell'environment come `VERCEL_AUTOMATION_BYPASS_SECRET`.
-  Dettagli in [`environments.md`](environments.md). Un revisore che non può
-  aprire l'anteprima decide alla cieca sulla maggioranza dei difetti possibili.
+- **anteprime di deploy apribili** — Vercel le protegge di default e rispondono
+  `302`. Si spegne con un interruttore: *Settings → Deployment Protection →
+  Vercel Authentication → Disabled*. Non è un cedimento: se la produzione è già
+  pubblica, l'anteprima serve la stessa applicazione con la stessa
+  autenticazione davanti agli stessi dati, e tenerla chiusa non protegge niente.
+  Per i progetti che devono restare privati c'è la strada con la chiave, in
+  [`environments.md`](environments.md). Un revisore che non può aprire
+  l'anteprima **non mergia niente**: è una delle sue tre condizioni.
 
 ## Cosa ti resta da fare
 
