@@ -12,6 +12,31 @@
 
 ---
 
+## Stato dell'esecuzione — 14 agosto 2026
+
+| task | stato |
+|---|---|
+| 1 — triage nel prompt dell'autore | **fatto** (`edcbb03`) |
+| 2 — corpus | **fatto** (`9450a1e`), poi corretto dai collaudi (`c76d64b`) |
+| 3 — `relay-dryrun` | **fatto** (`9450a1e`) |
+| 4 — prompt del revisore + casi A e B | **fatto**, con due correzioni imposte dal collaudo |
+| 5 — creare la routine del revisore | **da fare a mano nella UI** |
+| 6 — primo run osservato | dopo il 5 |
+| 7 — prompt del documentatore + casi D ed E | **fatto**, entrambi i casi passati |
+| 8 — creare la routine del documentatore | **da fare a mano nella UI** |
+| 9 — `docs/cadences.md` | **fatto** (`acb93c9`) |
+| 10 — `relay-init` con tre routine | **fatto** (`acb93c9`) |
+| 11 — README | **fatto** (`acb93c9`) |
+
+**Blocco trovato dai collaudi, che precede i task 5 e 6:** le anteprime Vercel
+di `predictionleagues` sono protette da Deployment Protection e rispondono `302`
+verso `vercel.com/sso-api`. Il revisore non può aprirle, e tre dei sei controlli
+fissi tornano `non verificabile` per questo solo motivo. Accendere la routine
+prima di aver tolto la protezione significa pagare un run pieno per una review
+quasi vuota.
+
+---
+
 ## Come si verifica un prompt
 
 `relay` non ha una suite di test e non deve averne una: i suoi artefatti sono prompt, e un prompt non si compila. Ma **si può collaudare**, e la disciplina test-first si applica letteralmente:
