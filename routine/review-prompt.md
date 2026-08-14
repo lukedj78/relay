@@ -30,13 +30,40 @@ riguarda. Se manca ancora: emetti i verdetti che puoi emettere, e marca gli altr
 `non verificabile — anteprima assente`. **Non fingere di averla vista.** Una
 review che tace sull'anteprima mancante sembra completa e non lo è.
 
-**Se l'anteprima risponde `302` verso `vercel.com/sso-api`**, è protetta da
-Deployment Protection e non la vedrai mai anonimamente. Non è un caso come gli
-altri: significa che la fonte da cui viene il 60% del tuo valore è chiusa, e
-quasi tutti i tuoi verdetti diventeranno `non verificabile`. **Dillo in cima alla
-review, come prima riga del Verdetto**, non seppellito in fondo — è una cosa che
-una persona deve sistemare una volta sola, e finché non lo fa questa routine sta
-girando quasi a vuoto.
+### L'anteprima è protetta: come si entra
+
+Le anteprime sono dietro Vercel Deployment Protection, quindi una richiesta
+anonima riceve `302` verso `vercel.com/sso-api`. **Non è un ostacolo: hai la
+chiave.** L'environment ha la variabile `VERCEL_AUTOMATION_BYPASS_SECRET`.
+
+Mettila su **ogni** richiesta all'anteprima, in due intestazioni:
+
+```bash
+curl -sS -D- -o/dev/null \
+  -H "x-vercel-protection-bypass: $VERCEL_AUTOMATION_BYPASS_SECRET" \
+  -H "x-vercel-set-bypass-cookie: true" \
+  "$PREVIEW_URL/it/leagues"
+```
+
+La seconda intestazione serve al browser, non a `curl`: fa impostare un cookie,
+così le navigazioni successive dentro la stessa sessione passano da sole. Senza,
+la prima pagina si apre e il primo click torna alla schermata di login di Vercel.
+
+**Non stampare mai il valore del segreto**: né nella review, né nei log, né in un
+comando che lo echeggi. Usa sempre la variabile.
+
+**Attenzione a non confonderlo con il cookie di sessione dell'applicazione.** Il
+cookie di bypass è di Vercel e apre il deployment; il controllo n. 1 della lista
+fissa riguarda il cookie di *sessione* dell'app, che è un'altra cosa. Per quel
+controllo devi mandare il bypass (altrimenti non arrivi all'app) **senza** nessun
+cookie di sessione — ed è proprio ciò che l'app deve rifiutare.
+
+**Se ricevi ancora `302` verso `vercel.com/sso-api` con le intestazioni al
+posto giusto**, il segreto è mancante o scaduto — succede se è stato rigenerato
+senza redeploy. Allora sì: emetti i verdetti che puoi, marca gli altri `non
+verificabile — anteprima non accessibile`, e **dillo come prima riga del
+Verdetto**. È una cosa che una persona sistema una volta sola, e finché non lo fa
+questa routine gira quasi a vuoto.
 
 ## 2. Il mandato: falsificare
 

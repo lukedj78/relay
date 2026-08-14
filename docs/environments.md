@@ -74,6 +74,37 @@ altro. Un progetto che non usa Resend ignora `RESEND_API_KEY` senza accorgersene
 La lista cresce e non si pulisce mai. Va bene: non c'e' niente dentro che valga
 la pena proteggere.
 
+### L'eccezione: la chiave delle anteprime
+
+C'e' una variabile che **non** e' finta, e che il ciclo chiuso richiede:
+
+```
+VERCEL_AUTOMATION_BYPASS_SECRET    <il segreto vero del progetto>
+```
+
+Serve al revisore per aprire le anteprime di deploy. Senza, la sua terza
+condizione di merge — «ho potuto aprire l'anteprima» — e' sempre falsa, e non
+mergia mai niente.
+
+**Come si genera:** Vercel → progetto → Settings → Deployment Protection →
+*Protection Bypass for Automation* → **Create**, con un'etichetta tipo «relay».
+E' disponibile su **tutti i piani**, Hobby compreso.
+
+**Perche' non basta disattivare la protezione.** Si potrebbe mettere Vercel
+Authentication su *Disabled* e finirebbe li', ma cosi' ogni anteprima diventa
+raggiungibile da chiunque abbia il link. Il bypass tiene la protezione accesa per
+le persone e lascia passare solo chi ha il segreto — che e' esattamente la
+distinzione che serve.
+
+**Due trappole:**
+
+- se il segreto viene rigenerato, i deployment gia' fatti continuano a
+  riferirsi al vecchio valore: va rifatto un deploy, altrimenti il revisore
+  ricomincia a ricevere `302`
+- il segreto e' **per progetto**, non per account: un progetto nuovo ne vuole uno
+  suo, ed e' il primo caso in cui conviene un `nightly-<progetto>` invece
+  dell'environment condiviso
+
 ## `nightly-<progetto>` — quando serve un segreto vero
 
 Duplichi `nightly`, gli dai il nome del progetto, e ci metti la credenziale

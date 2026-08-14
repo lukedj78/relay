@@ -109,8 +109,11 @@ Non tutte insieme, e non a caso.
   frase che nessuno fa rispettare. E **niente approvazioni obbligatorie**: le
   routine agiscono con la tua identità GitHub, e nessuno può approvare il proprio
   PR. Sarebbe un ciclo impossibile da chiudere per costruzione.
-- **anteprime di deploy apribili** — un revisore che non può aprire l'anteprima
-  decide alla cieca sulla maggioranza dei difetti possibili.
+- **una chiave per le anteprime di deploy** — non disattivare la protezione: si
+  genera un *Protection Bypass for Automation* su Vercel (disponibile su tutti i
+  piani) e lo si mette nell'environment come `VERCEL_AUTOMATION_BYPASS_SECRET`.
+  Dettagli in [`environments.md`](environments.md). Un revisore che non può
+  aprire l'anteprima decide alla cieca sulla maggioranza dei difetti possibili.
 
 ## Cosa ti resta da fare
 
