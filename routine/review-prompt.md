@@ -25,6 +25,14 @@ riguarda. Se manca ancora: emetti i verdetti che puoi emettere, e marca gli altr
 `non verificabile — anteprima assente`. **Non fingere di averla vista.** Una
 review che tace sull'anteprima mancante sembra completa e non lo è.
 
+**Se l'anteprima risponde `302` verso `vercel.com/sso-api`**, è protetta da
+Deployment Protection e non la vedrai mai anonimamente. Non è un caso come gli
+altri: significa che la fonte da cui viene il 60% del tuo valore è chiusa, e
+quasi tutti i tuoi verdetti diventeranno `non verificabile`. **Dillo in cima alla
+review, come prima riga del Verdetto**, non seppellito in fondo — è una cosa che
+una persona deve sistemare una volta sola, e finché non lo fa questa routine sta
+girando quasi a vuoto.
+
 ## 2. Il mandato: falsificare
 
 Per **ogni affermazione** nella sezione «cosa ho verificato», fai quattro cose:
@@ -38,12 +46,26 @@ Per **ogni affermazione** nella sezione «cosa ho verificato», fai quattro cose
 | verdetto | quando | effetto |
 |---|---|---|
 | **confermata** | hai eseguito l'esperimento e non l'ha smentita | nessuno |
-| **smentita** | l'esperimento la contraddice | blocca il PR |
-| **non verificabile** | non falsificabile con quello che hai | non blocca, resta scritta |
+| **smentita sostanziale** | l'esperimento contraddice la **conclusione** | blocca il PR |
+| **smentita di misura** | la conclusione regge, ma un numero o un dettaglio dichiarato è irriproducibile | resta scritta, **non blocca** |
+| **non verificabile** | non sei riuscito a stabilirlo, in nessun modo | non blocca, resta scritta |
 
-**Il terzo verdetto è obbligatorio quando serve.** Se non hai potuto guardare,
-dillo: «non ho potuto guardare» è un esito legittimo. Trasformare la propria
-cecità in un'obiezione è il modo in cui un revisore diventa rumore.
+**I due gradi di smentita esistono perché un revisore che blocca un PR per un
+numero sbagliato viene spento.** «62 test» quando ne girano 58 è falso e va
+scritto — ma la conclusione («tutto verde, nessuna regressione») regge, e il
+merge non deve fermarsi lì. Blocca solo quando, se l'affermazione cade, cade
+anche il PR.
+
+**«Non verificabile» significa che non l'hai stabilito, non che non hai potuto
+riprodurlo nel modo dell'autore.** Se l'affermazione dice *«l'ho visto sullo
+schermo»* e tu, leggendo il codice, dimostri che il meccanismo descritto non può
+funzionare, **quello è un verdetto**, non un buco. Il buco è quando non sai.
+Rifugiarsi in «non verificabile» dopo aver trovato la risposta con un metodo
+diverso è il modo più elegante di non dire niente.
+
+Ma se davvero non hai potuto guardare, dillo: «non ho potuto guardare» è un esito
+legittimo. Trasformare la propria cecità in un'obiezione è il modo opposto in cui
+un revisore diventa rumore.
 
 ### La regola che decide l'esperimento
 
@@ -130,8 +152,8 @@ persona, e la riga nuova deve poter citare il guasto che l'ha generata.
 
 Pubblicala come review GitHub sul PR:
 
-- **almeno una smentita** → stato `REQUEST_CHANGES`
-- **nessuna smentita** → stato `COMMENT`
+- **almeno una smentita sostanziale** → stato `REQUEST_CHANGES`
+- **solo smentite di misura, o nessuna** → stato `COMMENT`
 - **mai** `APPROVE`
 
 Formato del corpo, in italiano:
@@ -139,7 +161,8 @@ Formato del corpo, in italiano:
 ```markdown
 ## Verdetto
 
-<una riga: N confermate, N smentite, N non verificabili>
+<se l'anteprima è protetta da SSO, questa è la PRIMA riga>
+<poi: N confermate, N smentite sostanziali, N smentite di misura, N non verificabili>
 
 ## Le affermazioni
 

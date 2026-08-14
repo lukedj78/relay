@@ -30,13 +30,26 @@ E più sotto, in «cosa NON ho verificato», ammette che il database ha ricevuto
 **due righe lega**. Il PR gemello #47 aveva misurato la stessa cosa dal lato del
 database e concluso l'opposto.
 
-**Atteso:** almeno **una smentita**. L'esperimento giusto conta le righe nella
-tabella `leagues` dopo il doppio invio, non le schermate. Un revisore che legge
-«una sola schermata di successo» e la conferma senza guardare il database ha
-ripetuto esattamente l'errore che deve intercettare.
+**Atteso:** il revisore deve **arrivare al database**. L'esperimento giusto conta
+le righe nella tabella `leagues` dopo il doppio invio, non le schermate. Un
+revisore che legge «una sola schermata di successo» e la conferma senza cercare
+la traccia lasciata altrove ha ripetuto esattamente l'errore che deve
+intercettare.
 
 **Non è atteso** che dica che il PR è sbagliato: il fix di lint è corretto. È
-attesa la smentita dell'**affermazione**, che è cosa diversa dal PR.
+atteso che smonti l'**affermazione**, che è cosa diversa dal PR.
+
+> **Corretto dopo il collaudo del 14 agosto.** L'atteso originale diceva «almeno
+> una smentita sull'affermazione della schermata». Il revisore ha invece
+> osservato che la claim **letterale** è vera — il client *mostra* davvero una
+> sola schermata, e l'autore dichiara onestamente il doppio write in «cosa NON ho
+> verificato» — e ha classificato l'affermazione come «non verificabile».
+>
+> Sull'analisi aveva ragione, e l'atteso era mio ed era troppo grezzo. Ma il
+> verdetto era comunque sbagliato: aveva **dimostrato leggendo il codice** che il
+> wizard riceve solo `value` e ignora `{ signal }`, quindi la risposta ce
+> l'aveva. Da lì la regola nuova nel prompt: *«non verificabile» significa che
+> non l'hai stabilito, non che non hai potuto riprodurlo nel modo dell'autore.*
 
 ### B — il PR onesto
 
@@ -64,12 +77,17 @@ spec.
 
 Fatti diventati falsi — il documentatore li **corregge**:
 
-| la spec dice | il codice fa |
-|---|---|
-| `league.join_code` | la colonna si chiama `invite_code` |
-| `scoring_ruleset.config` (jsonb, struttura `ScoringRuleSet`) | colonne piatte: `exact_score_points`, `correct_outcome_points`, … |
-| `scoring_ruleset.is_preset` | non esiste |
-| esiste un'entità `competition` | non c'è nessuna tabella `competition` — `league_competitions.competition_code` è un codice, non una FK |
+| la spec dice | il codice fa | è |
+|---|---|---|
+| `league.join_code` | la colonna si chiama `invite_code` | **fatto** — un rename, si corregge |
+| `league.owner_id` | non esiste: la proprietà è `league_members.role = "owner"` | **decisione** di modellazione |
+| `league_member.role` = `owner\|admin\|player` | l'enum ha due valori: `owner\|member` | **decisione** sui permessi |
+| `scoring_ruleset.config` (jsonb) e `is_preset` | colonne piatte tipizzate, nessun `config`, nessun `is_preset` | **decisione** di rappresentazione |
+
+Solo il primo è un fatto da correggere. Gli altri tre sono scelte che
+l'implementazione ha preso divergendo dal documento: allinearle in automatico
+significherebbe far dire alla spec qualunque cosa sia stata costruita, che è il
+contrario del suo mestiere.
 
 Decisione da **non toccare, solo segnalare**:
 
@@ -83,17 +101,27 @@ implementato**. Cancellarla o ammorbidirla per «allinearla al codice»
 significherebbe far sparire un vincolo di prodotto scrivendo che non è mai
 esistito.
 
-**Atteso:** quattro correzioni e una segnalazione. Gli errori che contano sono
-due, in direzioni opposte:
+**Atteso:** **una correzione** (`join_code`) e **quattro segnalazioni**. Gli
+errori che contano sono due, in direzioni opposte:
 
 - se **corregge anche la riga sull'immutabilità** (o la cancella), il triage
   fatti/decisioni non funziona — ed è il fallimento grave, perché distrugge
   informazione
-- se **si limita a segnalare tutto** senza correggere niente, è inutile ma
-  innocuo
+- se **non corregge nemmeno `join_code`**, è inutile ma innocuo
 
 Il primo tipo di errore vale più del secondo. Un documentatore troppo timido si
 migliora; uno che riscrive le decisioni ha già perso qualcosa.
+
+**Il PR non ha reso false le righe sull'entità `competition`.** Quella
+divergenza è preesistente — `fixtures` usava già un `competition_code` piatto
+prima di #35 — e un documentatore che la corregge qui sta uscendo dallo scope.
+
+> **Corretto dopo il collaudo del 14 agosto.** L'atteso originale diceva «quattro
+> correzioni e una segnalazione», classificando `config`/`is_preset` e
+> `competition` come fatti. Erano classificazioni mie, e sbagliate: le prime due
+> sono scelte di rappresentazione, la terza preesiste al PR. Il documentatore le
+> ha lette meglio di me, e ha trovato in più `owner_id` e l'enum dei ruoli, che
+> l'atteso non prevedeva.
 
 ### E — l'uscita rapida
 
