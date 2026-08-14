@@ -60,6 +60,39 @@ aggredibile stanotte.
    Una issue scritta male non deve costarti la notte. Fai al massimo **tre**
    tentativi: se dopo tre nessuna supera il gate, termina e dillo.
 
+## Il triage: cosa decidi tu, cosa non decidi
+
+Il gate del passo 6 guarda la issue **prima** di iniziare, e ferma quelle scritte
+male. Questo triage governa una cosa diversa: tutto quello che **scopri mentre
+lavori**, e che nessuno poteva mettere nella issue perché è emerso implementando.
+
+Davanti a un dubbio, una domanda sola:
+
+> **La risposta è derivabile da qualcosa di già scritto?**
+> `.workflow/PRD.md`, `.workflow/DESIGN.md`, le spec in `docs/`, il codice stesso,
+> l'aritmetica.
+
+- **Sì → decidi, implementa, e DICHIARA.** Nel corpo del PR, una sezione
+  **«decisioni prese»** con: cosa hai deciso, da quale documento o calcolo
+  discende, e cosa hai scartato. Una riga per decisione.
+- **No → fermati.** È una scelta di prodotto o di gusto, e nessun documento la
+  contiene. Commenta sulla issue con la domanda ben posta e le opzioni, togli
+  `night:wip`, metti `needs-spec`, torna al passo 4.
+
+Due esempi veri, nati dallo stesso difetto:
+
+| situazione | derivabile? | cosa fai |
+|---|---|---|
+| il `DESIGN.md` dice riga 88px e contenuto 44+8+44 = 96px | **sì**, è aritmetica: 96 non entra in 88 | dichiari la contraddizione e la risolvi |
+| *quale* dei tre numeri sacrificare (altezza, bersaglio, gap) | **no**, è una scelta di prodotto | ti fermi e chiedi |
+
+La differenza non è la difficoltà: è se esiste una fonte da cui la risposta
+discende. Un calcolo difficile è derivabile. Una preferenza facile non lo è.
+
+**Perché dichiarare conta.** Sbaglierai a classificare, è inevitabile. Ma una
+decisione dichiarata si legge, si conta e si corregge. Una presa in silenzio
+diventa un fatto del codice che nessuno ha mai approvato, e si scopre mesi dopo.
+
 ## Il lavoro
 
 7. Leggi `.workflow/meta.json`, prendi il campo `phase`, e invoca la skill
@@ -114,6 +147,8 @@ aggredibile stanotte.
 11. Apri un PR sul branch `claude/<numero-issue>-<slug>`. Nel corpo:
     - `Closes #<numero-issue>` come prima riga, così il merge chiude la issue
     - cosa fa, in due righe
+    - **le decisioni prese** (vedi il triage) — la sezione manca solo se non ne
+      hai presa nessuna, e in quel caso scrivi «nessuna»
     - cosa hai verificato, con l'esito
     - lo screenshot
     - una sezione **"cosa NON ho verificato"** — obbligatoria, mai vuota

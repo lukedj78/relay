@@ -128,7 +128,7 @@ la issue **prima** di iniziare, il triage guarda ciò che emerge **durante** —
 il testo deve dirlo. Controlla che il primo paragrafo della nuova sezione lo
 dichiari esplicitamente. Se non lo fa, riscrivilo.
 
-Run: `grep -n "scopri mentre lavori" routine/prompt.md`
+Run: `grep -n "scopri mentre" routine/prompt.md`  (la frase va a capo: non cercarla intera)
 Expected: una riga, dentro la nuova sezione.
 
 - [ ] **Step 5: Commit**
