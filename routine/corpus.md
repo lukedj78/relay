@@ -144,6 +144,29 @@ prima di #35 — e un documentatore che la corregge qui sta uscendo dallo scope.
 > ha lette meglio di me, e ha trovato in più `owner_id` e l'enum dei ruoli, che
 > l'atteso non prevedeva.
 
+### F — la relazione si scrive anche quando non c'è nulla da riconciliare
+
+**PR:** `lukedj78/predictionleagues#45`
+
+Il caso E dice che questo PR non smentisce nessun documento. **Ma una voce nella
+relazione la merita comunque**: ha aggiunto la CI, ed è una cosa che fra sei mesi
+si vorrà sapere quando è entrata.
+
+**Atteso:** una voce in `docs/relazione.md` **e** «niente da riconciliare», in un
+PR sul branch `claude/docs-45` che contiene solo quel file.
+
+Se esce subito senza scrivere la voce, il §0b non sta funzionando — ed è l'errore
+più probabile, perché il §1 subito sotto invita a terminare.
+
+### G — il documentatore non risponde a sé stesso
+
+Non serve un PR storico: si collauda leggendo il prompt. Ma va provato appena
+esiste il primo PR `claude/docs-*`, perché è il caso in cui l'errore non è un
+verdetto sbagliato ma **il tetto giornaliero di run esaurito in un'ora**.
+
+**Atteso:** su un PR mergiato con branch `claude/docs-<n>`, termina subito con
+«PR mio, niente da fare». Nessuna voce, nessun PR.
+
 ### E — l'uscita rapida
 
 **PR:** `lukedj78/predictionleagues#45` (il workflow CI)

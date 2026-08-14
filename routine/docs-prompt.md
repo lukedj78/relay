@@ -4,9 +4,58 @@ trovare le frasi dei documenti che **quel merge ha reso false**, e correggerle.
 Sei una sessione autonoma: nessuno può rispondere a una domanda. Hai gli
 strumenti GitHub già autenticati: non ti serve nessun connector.
 
-## 1. L'uscita rapida
+## 0a. Prima di tutto: sei stato svegliato dal tuo stesso lavoro?
 
-**Fai questo per primo, e nella maggior parte dei casi finisce qui.**
+Guarda il branch del PR mergiato. **Se comincia con `claude/docs-`, è un PR tuo:
+TERMINA subito** dicendo «PR mio, niente da fare».
+
+Senza questo controllo il sistema entra in un loop: apri un PR di documenti,
+qualcuno lo mergia, il merge ti risveglia, tu scrivi una voce di relazione su
+quel PR, apri un altro PR di documenti, e così via senza fine. Il tetto
+giornaliero di run si esaurisce entro un'ora.
+
+Il trigger della routine filtra già questi PR, ma i filtri si sbagliano a
+configurare e questo controllo costa una riga.
+
+## 0b. La voce nella relazione — questa si scrive sempre
+
+Prima di ogni altra cosa, appendi una voce a `docs/relazione.md`, subito sotto
+l'intestazione: ordine cronologico inverso, la più recente in cima.
+
+**Questo passo non ha uscite rapide.** La riconciliazione dipende da cosa il PR
+ha smentito; la relazione no: ogni merge merita una riga, anche quello che non
+tocca nessun documento.
+
+**Trascrivi, non riassumere.** Le sezioni esistono già nel corpo del PR: prendile
+da lì, anche letteralmente. Se riscrivi con parole tue, fra un mese ci sono due
+racconti e nessuno sa quale credere — ed è l'unico modo in cui questo registro
+può fare danno invece che servire.
+
+```markdown
+## PR #<n> — <titolo> · <data del merge>
+
+Issue #<n>. Branch `claude/<...>`.
+
+**Cosa fa** — <dal PR>
+
+**Decisioni prese** — <dal PR, o «nessuna»>
+
+**Verificato** — <dal PR, con l'esito>
+
+**Non verificato** — <dal PR: fra sei mesi è la sezione più preziosa di tutte>
+
+**Verdetti del revisore** — <N confermate, N smentite, N non verificabili>
+<se ci sono state correzioni: quante, e cosa è caduto a ogni giro>
+
+**Prove** — <link raw a docs/evidence/PR-<n>/…, oppure «nessuna, perché …»>
+```
+
+Poi passa al §1.
+
+## 1. L'uscita rapida della riconciliazione
+
+**Fai questo per primo dopo la relazione, e nella maggior parte dei casi finisce
+qui.**
 
 Guarda cosa il PR ha cambiato. Poi guarda i documenti di riferimento:
 
@@ -17,11 +66,15 @@ Guarda cosa il PR ha cambiato. Poi guarda i documenti di riferimento:
 
 **Qualcuno di loro contiene un'affermazione che questo merge ha smentito?**
 
-Se no — ed è il caso normale — **TERMINA subito** dicendo «niente da
-riconciliare» e quale PR hai guardato. Non aprire un PR vuoto, non scrivere un
-riassunto, non «già che ci sono» sistemare altro.
+Se no — ed è il caso normale — **passa oltre la riconciliazione** dicendo «niente
+da riconciliare» e quale PR hai guardato. Non «già che ci sono» sistemare altro.
 
-Un merge su tre tocca i documenti. Gli altri due devono costarti trenta secondi.
+Ma **non hai finito**: la voce del §0 va comunque nel PR che apri. Se la
+riconciliazione non ha prodotto niente, il PR contiene solo `docs/relazione.md`,
+ed è giusto così.
+
+Un merge su tre tocca i documenti. Per gli altri due questo passo deve costarti
+trenta secondi.
 
 ## 2. Le due regole
 
@@ -66,12 +119,24 @@ leggere; il costo di riscrivere una scelta altrui è una scelta persa.
 
 Apri **un PR di sole modifiche ai documenti** — nessun file di codice, mai.
 
-Branch: `docs/riconcilia-<numero-del-PR-mergiato>`
+Branch: **`claude/docs-<numero-del-PR-mergiato>`**
+
+Il prefisso `claude/` non è estetico: sono gli unici branch che l'ambiente cloud
+accetta sempre in push. E il pezzo `docs-` è quello che ti fa riconoscere i tuoi
+stessi PR al §0a, così non entri in loop.
+
+**Il PR si apre sempre**, perché contiene almeno la voce della relazione. Se la
+riconciliazione non ha prodotto niente, contiene solo quella — ed è corretto:
+non è un PR vuoto, è un PR con una riga di registro.
 
 Ogni correzione cita il PR che l'ha resa necessaria. Nel corpo:
 
 ```markdown
-Riconcilia i documenti dopo #<N>.
+Documenta e riconcilia dopo #<N>.
+
+## Relazione
+
+Aggiunta la voce di #<N> in `docs/relazione.md`.
 
 ## Corretto
 
@@ -84,12 +149,17 @@ Riconcilia i documenti dopo #<N>.
   **decisione**, non un fatto: <perché>. Va decisa da una persona.
 ```
 
-Se non c'è niente in «Corretto» ma qualcosa in «Segnalato», **non aprire un PR**:
-commenta sul PR mergiato. Un PR senza modifiche è rumore.
+Le sezioni «Corretto» e «Segnalato» compaiono solo se hanno contenuto. La
+sezione «Relazione» c'è sempre.
 
 ## Regole assolute
 
 - Mai toccare file di codice. Solo `.md`.
+- **Mai lavorare su un PR il cui branch comincia con `claude/docs-`**: è tuo, e
+  rispondergli manda il sistema in loop.
+- **Mai modificare a mano una voce già scritta in `docs/relazione.md`.** Se una
+  voce è sbagliata, è sbagliato il PR da cui viene: si corregge lì, e la voce
+  resta la trascrizione fedele di quello che il PR diceva.
 - Mai push su `main`. Mai `--force`, `--amend`, `--no-verify`.
 - Mai cancellare una riga: se è falsa la **correggi**, se è una decisione la
   **segnali**. Cancellare fa sparire la storia di come si è arrivati lì.
