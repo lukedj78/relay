@@ -1,13 +1,4 @@
-# Le cadenze e le routine
-
-Da leggere sapendo che ci sono **due assi**, e che «tre» ricorre su entrambi per
-coincidenza:
-
-- **quante routine** — tre: l'autore, il revisore, il documentatore
-- **con che cadenza parte ciascuna** — le tre sezioni 1–3
-
-Le sezioni 1–3 parlano del secondo asse. La sezione «Le tre routine» mette
-insieme i due.
+# Il ciclo, e cosa costa
 
 `relay` non ha bisogno del buio. La prima versione si chiamava `night-flow` e
 girava alle due di notte, ma quella era una scelta di comodo travestita da
@@ -15,115 +6,126 @@ requisito.
 
 **Il vincolo vero non è l'ora, è la quota.** La finestra Max è una sola,
 condivisa fra claude.ai, Desktop e Claude Code. Un run che parte mentre stai
-lavorando compete con la tua sessione interattiva. «Di notte» è solo un modo
-semplice di dire *quando non la sto usando io* — se la domenica pomeriggio non
-programmi, la domenica pomeriggio vale quanto le tre di notte.
+lavorando compete con la tua sessione. «Di notte» è solo un modo semplice di dire
+*quando non la sto usando io*.
 
-Il secondo vincolo — nessuno sveglio a rispondere alle domande — vale a
-qualsiasi ora, ed è gestito dal prompt: gate `needs-spec`, e la regola di
-fermarsi invece di inventare un workaround.
+## Il ciclo
 
-## 1. A orario — il metronomo
+```
+      ┌─────────────────────────────────────────────────────────────┐
+      │                                                             │
+      ▼                                                             │
+  ① AUTORE ──▶ PR aperto ──▶ ② CI (Action) ──▶ ③ REVISORE           │
+      ▲                                            │                │
+      │                        smentita sostanziale│                │
+      │                                            ▼                │
+      │                                      ④ CORRETTORE           │
+      │                                            │                │
+      │                                     push ──┘                │
+      │                                     (torna a ③, max 2 volte)│
+      │                                                             │
+      │                          zero smentite + CI verde           │
+      │                                            │                │
+      │                                            ▼                │
+      │                                        MERGE ───────────────┤
+      │                                            │                │
+      │                                            ├──▶ ⑤ DOCUMENTATORE
+      │                                            │
+      └────────────────────────────────────────────┘
 
-Un trigger `Schedule`, intervallo minimo un'ora.
+  fuori dal ciclo:
+  ⑥ RETE (Action)     main rotto dopo il merge → revert, una volta sola
+  ⑦ SPAZZINO (orario) raccoglie i PR fermi per un evento perso
+```
 
-Prevedibile, spesa costante, un PR che ti aspetta. **È la cadenza con cui
-iniziare**, perché è l'unica che ti permette di misurare: una settimana di run
-identici ti dice quanto costano davvero in quota e quanti PR sopravvivono alla
-tua review.
+Nessuno di questi passaggi aspetta una persona. Quello che ti resta da fare è
+in fondo a questa pagina.
 
-## 2. Sul merge — la staffetta
-
-Un trigger `GitHub` su `pull_request.closed`, filtrato con **is merged = true**.
-
-Appena approvi un PR, parte il task successivo. È il cambio che pesa di più:
-si passa da *un task a notte* a *un task ogni volta che ne approvi uno*.
-
-La proprietà interessante è che **si auto-regola**. Il sistema avanza solo
-quando tu dai l'ok, quindi la spesa cresce esattamente quanto la tua fiducia. Se
-una mattina i PR non ti convincono e non mergi niente, la catena si ferma da
-sola — senza che tu debba disattivare nulla.
-
-Il rovescio: raggiungi il **tetto giornaliero di run** molto prima. E durante la
-research preview i trigger GitHub hanno cap orari per routine e per account,
-oltre i quali gli eventi vengono scartati.
-
-## 3. Su richiesta — il pulsante
-
-Un trigger `API`: un endpoint dedicato con un bearer token, da chiamare con una
-POST. Da uno script, da una scorciatoia sul telefono, dalla tua pipeline.
-
-Complemento, non cadenza principale. Utile quando vuoi far ripartire la coda
-dopo aver riscritto tre issue `needs-spec`, senza aspettare il prossimo giro.
-
-Il token si genera dalla UI web e **si vede una volta sola**: copialo subito.
-
-## Si combinano
-
-Una routine accetta più trigger insieme. La combinazione sensata a regime:
-
-| Trigger | Cosa copre |
-|---|---|
-| `Schedule` notturno | il fondo: un task al giorno comunque |
-| `GitHub` sul merge | la resa: accelera quando tu acceleri |
-
-Così la notte lavora anche se non hai mergiato niente, e di giorno ogni tuo
-merge innesca la frazione successiva.
-
-## Come arrivarci
-
-Non partire dalla catena. L'ordine che consiglio:
-
-1. **Settimana 1** — solo `Schedule`. Misuri: quanti PR arrivano, quanti ne
-   mergi davvero, quanta quota resta al mattino.
-2. **Quando tre o quattro PR di fila sono arrivati in buono stato**, aggiungi il
-   trigger sul merge. Sono due click sulla routine esistente.
-3. **L'API** quando ti accorgi di volerlo lanciare a mano — non prima.
-
-Aggiungere o togliere un trigger a una routine esistente non è una scelta
-definitiva: si fa dalla sua pagina di modifica in qualsiasi momento.
-
-## Le tre routine
+## Chi parte quando
 
 | routine | trigger | costa | cresce con |
 |---|---|---|---|
-| **autore** | `Schedule` + `GitHub` sul merge | un run pieno | i task che restano in coda |
-| **revisore** | `GitHub` su PR aperto o riaperto | un run pieno | **i PR che apri** |
-| **documentatore** | `GitHub` su merge riuscito | quasi zero, di norma | i merge che toccano i documenti |
+| **autore** | `Schedule`, più `pull_request` closed+merged | un run pieno | i task in coda |
+| **revisore** | `pull_request` opened, reopened, **synchronize** | un run pieno | i PR aperti |
+| **correttore** | `pull_request` — reagisce alla review | un run pieno | le smentite |
+| **documentatore** | `pull_request` closed, is merged = true | quasi zero se il PR non tocca documenti | i merge |
+| **spazzino** | `Schedule` orario | quasi zero se non c'è niente di fermo | gli eventi persi |
 
-Condividono **un solo environment**, `nightly`: stesse credenziali, stesso setup,
-stessi domini consentiti. Si distinguono per prompt e per trigger, non per
-ambiente. Non creare un environment per routine — si moltiplicherebbero i posti
-in cui aggiornare `DATABASE_URL`.
+Tutte e cinque condividono **un solo environment**, `nightly`. Si distinguono per
+prompt e trigger, non per ambiente: creare un environment per routine
+moltiplicherebbe i posti in cui aggiornare `DATABASE_URL`.
 
-### Cosa succede alla spesa
+**Due filtri sui trigger non sono facoltativi:**
 
-L'autore era una cadenza sola e prevedibile. Con tre routine il conto cambia
-forma, e vale la pena vederlo scritto prima di accendere tutto:
+- il **revisore** e il **correttore** filtrano via i PR con la label
+  `needs-human`, altrimenti un PR uscito dal ciclo ci rientra da solo
+- il **documentatore** filtra via i branch che cominciano con `claude/docs-`,
+  altrimenti risponde ai propri PR e il sistema entra in loop
 
-- il **revisore** parte a ogni PR aperto. Se l'autore apre un PR al giorno, è un
-  run in più al giorno. Se acceleri l'autore, acceleri anche questo: non è una
-  spesa che si aggiunge una volta, è una che si aggancia alla prima.
-- il **documentatore** parte a ogni merge, ma la maggior parte delle volte esce
-  in pochi secondi con «niente da riconciliare». È il più economico dei tre —
-  **se** l'uscita rapida funziona. Se non funziona è il più caro, perché parte
-  sempre. È la prima cosa da guardare nei suoi primi run.
+## I due tetti, che sono diversi
 
-Il revisore **non** parte su `synchronize`, cioè a ogni push sul branch di un PR
-aperto. Sarebbe la scelta più completa e anche il modo più rapido di esaurire i
-tetti orari dei trigger GitHub.
+**Il tetto giornaliero di run per account.** Un'issue consuma 4–6 run dal momento
+in cui viene presa a quando è mergiata. Non è il costo di un task: è il costo di
+un task moltiplicato per quanti giri di correzione servono.
 
-### In che ordine accenderle
+**Il tetto orario sugli eventi webhook**, per routine e per account. Gli eventi in
+eccesso **vengono scartati**, non messi in coda. Un evento scartato in un ciclo
+chiuso significa un PR che resta fermo per sempre, in silenzio: il revisore non è
+mai partito e non partirà.
 
-1. **L'autore da solo**, come oggi. Finché non hai una settimana di run.
+Questa è la ragione per cui esiste **lo spazzino**, ed è anche la ragione per cui
+è una routine a orario e non un trigger GitHub: le schedule non passano dai
+webhook, quindi la rete non può essere zittita dallo stesso meccanismo che deve
+compensare.
+
+## Sulla parallelizzazione
+
+Il lock che permette a più autori di girare insieme è la **creazione della ref
+del branch** via API, che risponde `422` se esiste già. La label `night:wip` non
+è più il lock: è un'etichetta leggibile, e basta.
+
+Il vincolo che morde per primo non è il lock, è la quota. **Si parte da due
+autori**, si misura una settimana, e si alza solo se il tetto giornaliero non è
+il limite.
+
+## In che ordine accendere
+
+Non tutte insieme, e non a caso.
+
+1. **L'autore da solo.** Finché non hai una settimana di run e un PR che ti
+   convince.
 2. **Il revisore.** È quello che restituisce di più: su dieci difetti veri di
-   `predictionleagues`, sei non erano leggibili in un diff.
-3. **Il documentatore**, per ultimo. È il più economico, ma serve solo quando i
-   documenti hanno già cominciato a divergere — cioè non il primo mese.
+   `predictionleagues`, sei non erano leggibili in un diff. Guarda la prima
+   review prima di andare avanti.
+3. **Il correttore**, non insieme al revisore. Il revisore da solo lascia i PR
+   fermi dove tu li vedi — ed è il modo più sicuro di misurarlo prima di dargli
+   un braccio.
+4. **Il documentatore**, dopo il primo merge automatico riuscito.
+5. **Lo spazzino**, per ultimo, e solo se vedi PR che si fermano.
+
+**I due prerequisiti che precedono tutto**, e che sono interruttori umani:
+
+- **`verify` obbligatoria su `main`** — senza, «mergia se la CI è verde» è una
+  frase che nessuno fa rispettare. E **niente approvazioni obbligatorie**: le
+  routine agiscono con la tua identità GitHub, e nessuno può approvare il proprio
+  PR. Sarebbe un ciclo impossibile da chiudere per costruzione.
+- **anteprime di deploy apribili** — un revisore che non può aprire l'anteprima
+  decide alla cieca sulla maggioranza dei difetti possibili.
+
+## Cosa ti resta da fare
+
+Due cose, entrambe occasionali:
+
+- **leggere `docs/relazione.md`**, che il documentatore riempie a ogni merge
+- **riscrivere le issue** finite in `needs-spec`, e guardare i PR finiti in
+  `needs-human`
+
+Il merge non è più fra queste. Se ti manca, la si toglie: è un trigger da
+cambiare, non un impianto da rifare.
 
 ## Una nota sul nome dell'environment
 
-Il cloud environment si chiama ancora `nightly`. È un nome ereditato dalla
-prima versione e non ha più molto senso, ma rinominarlo significa rifarlo a mano
-e ripuntarci tutte le routine — per un'etichetta. Resta `nightly`, e questa riga
+Il cloud environment si chiama ancora `nightly`. È un nome ereditato dalla prima
+versione e non ha più molto senso, ma rinominarlo significa rifarlo a mano e
+ripuntarci tutte le routine — per un'etichetta. Resta `nightly`, e questa riga
 esiste per non farti cercare la coerenza che non c'è.

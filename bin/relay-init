@@ -57,6 +57,51 @@ fi
 
 ok "prerequisiti verificati (phase='$PHASE')"
 
+# ─── Prerequisiti del ciclo chiuso ───────────────────────────────────────────
+# Non bloccano relay-init: il repo si prepara lo stesso. Ma senza di loro il
+# ciclo si accende e gira a vuoto, e gira a vuoto in silenzio — che e' peggio.
+
+if git remote get-url origin >/dev/null 2>&1; then
+  # Attenzione a come si legge questa risposta: su 403 `gh api` stampa comunque
+  # un JSON, quindi "output non vuoto" NON significa "protetta". Va guardato lo
+  # stato HTTP, non il contenuto.
+  PROT_BODY=$(gh api "repos/$GH_OWNER/$SLUG/branches/main/protection" 2>&1 || true)
+  case "$PROT_BODY" in
+    *'"status":"403"'*|*'Upgrade to GitHub Pro'*)
+      warn "protezione dei branch NON disponibile: repo privato su piano free.
+     GitHub la offre solo su repo pubblici o dal piano Pro in su.
+     Il ciclo funziona lo stesso, con un livello di sicurezza in meno:
+     il revisore controlla la CI da se' (disciplina) invece che GitHub
+     rifiutare il merge (imposizione). La rete di revert resta, ed e'
+     esattamente il caso per cui esiste.
+     Per avere l'imposizione: repo pubblico, oppure GitHub Pro." ;;
+    *'"status":"404"'*|*'Branch not protected'*)
+      warn "main NON protetta — il revisore potra' mergiare con la CI rossa.
+     Settings → Rules → New branch ruleset su main:
+       SI  Require status checks to pass → verify
+       NO  Required approvals — le routine girano con la TUA identita' e
+           GitHub vieta di approvare un proprio PR: il ciclo diventerebbe
+           impossibile da chiudere
+       SI  Bypass list → Repository admin, altrimenti l'Action di revert
+           non puo' pushare" ;;
+    *)
+      REQUIRED=$(printf '%s' "$PROT_BODY" \
+        | python3 -c 'import json,sys; print(", ".join(json.load(sys.stdin).get("required_status_checks",{}).get("contexts",[])) or "nessuno")' 2>/dev/null \
+        || echo "?")
+      ok "main protetta, check richiesti: $REQUIRED" ;;
+  esac
+
+  DELBR=$(gh api "repos/$GH_OWNER/$SLUG" --jq .delete_branch_on_merge 2>/dev/null || echo "?")
+  if [ "$DELBR" = "true" ]; then
+    ok "i branch si cancellano al merge (il lock si rilascia da solo)"
+  else
+    warn "delete_branch_on_merge=false — i lock resteranno appesi.
+     Il lock e' la ref del branch: se sopravvive al merge, quella issue
+     resta presa per sempre. Si gira con:
+       gh api repos/$GH_OWNER/$SLUG -X PATCH -f delete_branch_on_merge=true"
+  fi
+fi
+
 if $CHECK_ONLY; then
   echo "--check: nessuna modifica fatta."
   exit 0
@@ -118,35 +163,61 @@ cat <<EOF
        $NIGHT_FLOW/bin/tasks-to-issues --dry-run
        $NIGHT_FLOW/bin/tasks-to-issues
 
-  2. Le routine — https://claude.ai/code/routines → New routine
+  2. Le due Action — copiale nel progetto:
 
-     Tutte e tre: Repository $GH_OWNER/$SLUG, Environment nightly,
+       cp $NIGHT_FLOW/templates/revert-on-broken-main.yml .github/workflows/
+
+     La CI (verify.yml) e' del progetto e dev'esserci gia'.
+
+  3. Le routine — https://claude.ai/code/routines → New routine
+
+     Tutte e cinque: Repository $GH_OWNER/$SLUG, Environment nightly,
      Modello Sonnet, e Connectors NESSUNO — l'API ne attacca alcuni
      da sola, vanno tolti a mano e RICONTROLLATI dopo il salvataggio.
 
-     ┌─ $SLUG — notte ───────────────── ACCENDI QUESTA PER PRIMA
+     ┌─ $SLUG — autore ──────────────── ACCENDI QUESTA PER PRIMA
      │  Trigger   Schedule → daily, 02:00
+     │            + GitHub → pull_request closed, is merged = true
      │  Prompt    $NIGHT_FLOW/routine/prompt.md
      └─
 
      ┌─ $SLUG — revisore ────────────── quando l'autore e' rodato
-     │  Trigger   GitHub → pull_request, opened + reopened
-     │            (NON synchronize: sarebbe un run a ogni push)
+     │  Trigger   GitHub → pull_request: opened, reopened, synchronize
+     │  Filtro    Labels  is not one of  needs-human
      │  Prompt    $NIGHT_FLOW/routine/review-prompt.md
      └─
 
-     ┌─ $SLUG — documentatore ───────── per ultima
-     │  Trigger   GitHub → pull_request, closed, is merged = true
+     ┌─ $SLUG — correttore ──────────── NON insieme al revisore
+     │  Trigger   GitHub → pull_request (reagisce alla review)
+     │  Filtro    Labels  is not one of  needs-human
+     │  Prompt    $NIGHT_FLOW/routine/fix-prompt.md
+     └─
+
+     ┌─ $SLUG — documentatore ───────── dopo il primo merge automatico
+     │  Trigger   GitHub → pull_request closed, is merged = true
+     │  Filtro    Head branch  does not start with  claude/docs-
      │  Prompt    $NIGHT_FLOW/routine/docs-prompt.md
      └─
 
-     L'ordine non e' estetico: vedi $NIGHT_FLOW/docs/cadences.md.
-     Ogni routine e' un run pieno di quota, e il revisore parte a
-     ogni PR che l'autore apre.
+     ┌─ $SLUG — spazzino ────────────── per ultima, se vedi PR fermi
+     │  Trigger   Schedule → hourly
+     │  Prompt    $NIGHT_FLOW/routine/sweeper-prompt.md
+     └─
 
-  3. Premi "Run now" sulla prima e GUARDA il run. Il setup script
-     sbaglia sempre qualcosa la prima volta. Accendi il cron solo
-     dopo che un run e' arrivato fino al PR — e le altre due solo
-     dopo che il primo PR ti e' sembrato buono.
+     I DUE FILTRI NON SONO FACOLTATIVI:
+       - senza "not one of needs-human", un PR uscito dal ciclo
+         ci rientra da solo e non ne esce piu'
+       - senza "does not start with claude/docs-", il documentatore
+         risponde ai propri PR: apre un PR, il merge lo risveglia,
+         ne apre un altro. Il tetto giornaliero finisce in un'ora.
+
+  4. Premi "Run now" sull'autore e GUARDA il run. Il setup script
+     sbaglia sempre qualcosa la prima volta.
+
+     Poi accendi UNA routine per volta, nell'ordine dei riquadri, e
+     guarda cosa fa prima di passare alla successiva. L'ordine non e'
+     estetico: vedi $NIGHT_FLOW/docs/cadences.md.
+
+     Un'issue costa 4-6 run nel ciclo completo, non uno.
 
 EOF

@@ -1,0 +1,120 @@
+name: revert-on-broken-main
+
+# The safety net of the closed loop: when an automatic merge breaks main, undo it
+# without waiting for someone to look.
+#
+# This is an Action and not a routine for two reasons: no judgement is involved,
+# and routine triggers only cover Pull request and Release events — there is no
+# "CI went red on main" event to subscribe to.
+
+on:
+  workflow_run:
+    workflows: [verify]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  revert:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 10
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Decide whether to revert
+        id: decide
+        # Every value from the event goes through env: rather than ${{ }} inside
+        # run:. A ${{ }} expression is pasted into the script source before bash
+        # sees it, so anything attacker-shaped in it becomes code. head_sha is a
+        # hex string and safe today, but the pattern is what gets copied.
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          SUBJECT=$(git log -1 --format=%s "$SHA")
+
+          # Never revert a revert. If the broken commit is itself a revert, undoing
+          # it again does not converge on a working tree — it oscillates. Stop and
+          # ask for a person.
+          if printf '%s' "$SUBJECT" | grep -q '^Revert '; then
+            {
+              echo "act=stop"
+              echo "reason=the broken commit is itself a revert"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # `git rev-list --parents -n 1` prints the commit followed by its
+          # parents, so a squash merge yields 2 words and a merge commit yields 3.
+          # This repository squash-merges, so `git revert <sha>` needs no -m. If it
+          # ever switches to merge commits, this must be revisited rather than
+          # guessed at — hence the explicit stop instead of a silent -m 1.
+          WORDS=$(git rev-list --parents -n 1 "$SHA" | wc -w)
+          if [ "$WORDS" -ne 2 ]; then
+            {
+              echo "act=stop"
+              echo "reason=commit has $((WORDS - 1)) parents, expected 1 (squash merge)"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          {
+            echo "act=revert"
+            echo "sha=$SHA"
+            echo "subject=$SUBJECT"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Revert
+        if: steps.decide.outputs.act == 'revert'
+        env:
+          SHA: ${{ steps.decide.outputs.sha }}
+        run: |
+          git config user.name  "relay safety net"
+          git config user.email "noreply@github.com"
+          git revert --no-edit "$SHA"
+          git push origin main
+
+      - name: Open an issue about it
+        if: always() && steps.decide.outputs.act != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          ACT: ${{ steps.decide.outputs.act }}
+          SHA: ${{ steps.decide.outputs.sha }}
+          SUBJECT: ${{ steps.decide.outputs.subject }}
+          REASON: ${{ steps.decide.outputs.reason }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ "$ACT" = "revert" ]; then
+            TITLE="main era rotto dopo un merge automatico — annullato"
+            BODY=$(cat <<EOF
+          \`verify\` ha fallito su \`main\` dopo $SHA ($SUBJECT).
+          Il commit è stato annullato con un revert: \`main\` dovrebbe essere di nuovo verde.
+
+          Run della CI: $RUN_URL
+
+          Il ciclo automatico continua. Questa issue serve a capire **perché** il
+          revisore ha mergiato qualcosa che rompe \`main\`: è un buco nella lista
+          fissa dei suoi controlli, e va chiuso aggiungendoci una riga.
+          EOF
+          )
+          else
+            TITLE="main è rotto e NON l'ho annullato"
+            BODY=$(cat <<EOF
+          \`verify\` ha fallito su \`main\`, ma non ho fatto il revert: $REASON.
+
+          Run della CI: $RUN_URL
+
+          **Serve una persona.** La rete si ferma da sola in questo caso invece di
+          insistere, perché insistere non converge.
+          EOF
+          )
+          fi
+          gh issue create --repo "$REPO" \
+            --title "$TITLE" --body "$BODY" --label "priority:urgent"

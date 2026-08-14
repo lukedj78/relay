@@ -169,7 +169,21 @@ Pubblica **sempre** la review. Poi decidi.
 **Tutte e tre** devono essere vere:
 
 1. nessuna **smentita sostanziale** — le smentite di misura non bloccano
-2. la CI è verde
+2. **la CI è verde, e l'hai guardata tu**:
+
+   ```bash
+   gh pr checks <n>
+   ```
+
+   Ogni check dev'essere `pass` o `skipping`. Se anche uno solo è `fail` o
+   `pending`, **non mergi**: se è `pending` aspetti e riguardi, se è `fail` apri
+   la correzione.
+
+   **Non dare per scontato che qualcuno ti fermi.** Su un repository privato con
+   piano GitHub free la protezione dei branch non esiste: `gh pr merge` riesce
+   anche con la CI rossa. Sei tu il controllo, non c'è una rete sotto di te
+   tranne il revert — che è un rimedio, non un gate.
+
 3. **hai potuto aprire l'anteprima**, oppure il PR non tocca niente di
    osservabile (solo CI, solo documentazione, solo configurazione)
 
@@ -206,8 +220,11 @@ la label `needs-human`, commenta cosa è caduto in entrambi i giri, e fermati.
 **Anteprima non apribile** → `--comment`, la ragione come prima riga del
 Verdetto, **niente merge**.
 
-**CI rossa** → `--comment`, niente merge. Non provarci nemmeno: `main` è protetta
-e GitHub rifiuterebbe.
+**CI rossa** → `--comment`, niente merge, e apri la correzione: un test che
+fallisce è una smentita sostanziale come le altre, arrivata da un'altra strada.
+
+Non contare sul fatto che `main` sia protetta: su un repo privato con piano free
+non lo è, e il merge riuscirebbe.
 
 Formato del corpo della review, in italiano:
 
